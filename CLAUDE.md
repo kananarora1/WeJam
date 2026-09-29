@@ -151,16 +151,24 @@ Rules:
 
 ## 8. Planned build order (one step at a time, each may be split further)
 
+Backend and mobile are interleaved: each backend feature is followed by the mobile screens that consume it. Backend steps are numbered, mobile steps are `M<n>`. Build in this order:
+
 1. Monorepo skeleton (folders, combined `.gitignore`, `docs/` stubs) + Docker Compose (Postgres/PostGIS, Redis) + Spring Boot (Maven) boot-up + Flyway baseline + health check
-2. Auth: Firebase token verification → app JWT + roles
+2. Auth, split into:
+   - 2a. App JWT + Spring Security + users & roles (fake Firebase verifier)
+   - 2b. Real Firebase ID token verification
+   - 2c. springdoc + committed `docs/api/openapi.yaml`
+- **M1.** Flutter: project setup + phone OTP login → token exchange → "me" screen
 3. Venue & space CRUD (with location)
+- **M2.** Flutter: venue admin screens
 4. Slot request + approval state machine + exclusion constraint + concurrency tests
+- **M3.** Flutter: host slot request + venue approvals
 5. Nearby feed (PostGIS, keyset pagination) → then Redis cache
+- **M4.** Flutter: nearby feed (list → map)
 6. Join flow (performer/audience) with atomic caps + tests
-7. Flutter: project setup, auth, nearby feed (list → map)
-8. Flutter: event detail, join, host request, venue approvals
-9. Notifications: outbox + FCM + reminders
-10. Live lineup: Redis queue + WebSocket + Flutter live screen
-11. Load test feed (k6), measure p95, document results
+- **M5.** Flutter: event detail + join
+7. Notifications: outbox + FCM + reminders
+8. Live lineup: Redis queue + WebSocket + Flutter live screen
+9. Load test feed (k6), measure p95, document results
 
 Don't start any step until I say so. When I say "next", propose the plan for the next step (section 3, point 1).
