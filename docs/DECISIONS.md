@@ -46,3 +46,13 @@ ADR-style log: context → decision → why.
 - **Context:** Original order built all backend features (steps 1–6) before any Flutter work.
 - **Decision:** After auth (2a–2c), alternate: backend feature → Flutter screens that consume it (M1–M5). Notifications, live lineup and load test follow.
 - **Why:** Learn Flutter incrementally (setup + login first, not setup + auth + map at once), and exercise each API with a real client while it's fresh. Trade-off: more context switching; API changes may require client regeneration in the same step.
+
+## ADR-010: Firebase Admin SDK with revocation check
+- **Context:** Firebase ID tokens can be verified either with a generic JWT library against Google's public keys, or with the Firebase Admin SDK.
+- **Decision:** Admin SDK, `verifyIdToken(token, checkRevoked = true)`. Credentials via `GOOGLE_APPLICATION_CREDENTIALS` (key file outside the repo).
+- **Why:** Official, maintained verification logic; revocation check also rejects disabled users and revoked sessions (one Firebase call per exchange ≈ once/hour/user). Same credentials will serve FCM in step 7. Cost: large dependency tree and a service-account secret to manage.
+
+## ADR-011: No exclusions on firebase-admin's transitive dependencies
+- **Context:** Tried excluding `google-cloud-firestore`/`google-cloud-storage` (~71 jars incl. gRPC, OpenTelemetry, protobuf).
+- **Decision:** Keep the SDK's full dependency set.
+- **Why:** The SDK itself needs classes that only arrive via those modules (`gax` paging types, `google-http-client-jackson2` for `FirebaseOptions`); failures surface only at runtime (`NoClassDefFoundError`). Re-adding pieces one by one is fragile across SDK upgrades. Revisit only if artifact size/startup becomes a real problem.

@@ -20,3 +20,11 @@ Log of completed steps (what was built, key decisions). Newest at the bottom.
 - Health: anonymous sees only status; authenticated sees component details.
 - Tests: exchange, idempotent re-login, concurrent first logins, invalid/blank token, /me with missing/tampered/expired/valid token, role add (hasRole check, idempotency, USER/unknown rejected).
 - Known gap: OpenAPI spec not generated yet (step 2c).
+
+## Step 2b — Real Firebase ID token verification (2026-09-29)
+- Dep: `com.google.firebase:firebase-admin` 9.11.0 (pinned via `firebase-admin.version`; not managed by Boot). Full transitive set — see ADR-011.
+- `FirebaseConfig` (active unless `wejam.auth.fake-firebase=true`): `FirebaseApp` from `GOOGLE_APPLICATION_CREDENTIALS` + `FIREBASE_PROJECT_ID` (validated, startup fails if blank), deleted on shutdown for DevTools restarts.
+- `FirebaseAdminTokenVerifier`: `verifyIdToken(token, checkRevoked=true)`; uid + `phone_number` → `FirebaseIdentity`. Token/user problems → 401; transport/cert-fetch failures → 503 (`FirebaseUnavailableException`) so clients retry instead of signing out.
+- Service-account key lives at `~/.config/wejam/firebase-sa.json` (chmod 600); `.gitignore` guards against key files in the repo.
+- Tests: unit test of the verifier's mapping with mocked `FirebaseAuth` (valid, missing phone, 5 rejection codes, malformed, network/cert failure → 503). Integration tests stay on the fake verifier.
+- Manually verified: startup fails without project id; real mode rejects fake-format, garbage and forged RS256 tokens with 401. End-to-end via Firebase Auth REST (test number +911234567890 / 123456): real ID token → app JWT → `/me`; after `revokeRefreshTokens` the same ID token → 401. Requires SMS region policy allowing India.

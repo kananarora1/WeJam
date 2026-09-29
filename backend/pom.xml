@@ -28,6 +28,7 @@
     </scm>
     <properties>
         <java.version>21</java.version>
+        <firebase-admin.version>9.11.0</firebase-admin.version>
     </properties>
     <dependencies>
         <dependency>
@@ -65,6 +66,11 @@
         <dependency>
             <groupId>org.flywaydb</groupId>
             <artifactId>flyway-database-postgresql</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.google.firebase</groupId>
+            <artifactId>firebase-admin</artifactId>
+            <version>${firebase-admin.version}</version>
         </dependency>
         <dependency>
             <groupId>org.postgresql</groupId>
