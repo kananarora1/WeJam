@@ -10,6 +10,9 @@
 .env
 .env.*
 !.env.example
+# Firebase service-account keys live in ~/.config/wejam, never in the repo.
+*-firebase-adminsdk-*.json
+firebase-sa.json
 
 ### Backend (Maven / Spring Boot) ###
 backend/HELP.md
