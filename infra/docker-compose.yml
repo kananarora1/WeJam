@@ -1,0 +1,33 @@
+name: wejam
+
+services:
+  postgres:
+    image: postgis/postgis:17-3.5
+    # Image is published for amd64 only; on Apple Silicon it runs under emulation.
+    platform: linux/amd64
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-wejam}
+      POSTGRES_USER: ${POSTGRES_USER:-wejam}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-wejam}
+    ports:
+      - "${POSTGRES_PORT:-5433}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  postgres-data:

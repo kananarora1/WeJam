@@ -1,0 +1,55 @@
+### OS / editors ###
+.DS_Store
+.idea/
+*.iws
+*.iml
+*.ipr
+.vscode/
+
+### Secrets / local env ###
+.env
+.env.*
+!.env.example
+
+### Backend (Maven / Spring Boot) ###
+backend/HELP.md
+backend/target/
+!backend/**/src/main/**/target/
+!backend/**/src/test/**/target/
+backend/.mvn/wrapper/maven-wrapper.jar
+backend/build/
+!backend/**/src/main/**/build/
+!backend/**/src/test/**/build/
+
+# STS
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+
+# NetBeans
+/backend/nbproject/private/
+/backend/nbbuild/
+/backend/dist/
+/backend/nbdist/
+/backend/.nb-gradle/
+
+### Mobile (Flutter / Dart) ###
+mobile/.dart_tool/
+mobile/.flutter-plugins
+mobile/.flutter-plugins-dependencies
+mobile/.pub-cache/
+mobile/.pub/
+mobile/build/
+mobile/coverage/
+mobile/**/Pods/
+mobile/**/.symlinks/
+mobile/android/.gradle/
+mobile/android/local.properties
+mobile/android/**/GeneratedPluginRegistrant.java
+mobile/ios/Flutter/Generated.xcconfig
+mobile/ios/Flutter/flutter_export_environment.sh
+mobile/ios/**/GeneratedPluginRegistrant.*
