@@ -28,3 +28,11 @@ Log of completed steps (what was built, key decisions). Newest at the bottom.
 - Service-account key lives at `~/.config/wejam/firebase-sa.json` (chmod 600); `.gitignore` guards against key files in the repo.
 - Tests: unit test of the verifier's mapping with mocked `FirebaseAuth` (valid, missing phone, 5 rejection codes, malformed, network/cert failure → 503). Integration tests stay on the fake verifier.
 - Manually verified: startup fails without project id; real mode rejects fake-format, garbage and forged RS256 tokens with 401. End-to-end via Firebase Auth REST (test number +911234567890 / 123456): real ID token → app JWT → `/me`; after `revokeRefreshTokens` the same ID token → 401. Requires SMS region policy allowing India.
+
+## Step 2c — OpenAPI spec + Swagger UI (2026-09-30)
+- Dep: `org.springdoc:springdoc-openapi-starter-webmvc-ui` 3.1.1 (pinned via `springdoc.version`).
+- `common/OpenApiConfig`: title/version, fixed server `http://localhost:8080`, global `bearerAuth` (HTTP bearer JWT); `POST /api/v1/auth/token` opts out.
+- `@Tag("Auth")`/`@Tag("Me")` → Dart `AuthApi`/`MeApi`; DTOs annotated with required/nullable for Dart null-safety.
+- springdoc config: OpenAPI 3.0, keys sorted, only `/api/**` documented, `application/json` responses; `SPRINGDOC_ENABLED=false` hides docs + UI.
+- Security: `/v3/api-docs`, `/v3/api-docs/**`, `/v3/api-docs.yaml`, `/swagger-ui/**`, `/swagger-ui.html` public.
+- `OpenApiSpecTest` regenerates `docs/api/openapi.yaml` on every `./mvnw test` and asserts operations, security and schema nullability; output verified deterministic and identical to the live app's spec.

@@ -37,6 +37,8 @@ class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.POST, "/api/v1/auth/token").permitAll()
                         .requestMatchers("/actuator/health", "/actuator/health/**").permitAll()
+                        .requestMatchers("/v3/api-docs", "/v3/api-docs/**", "/v3/api-docs.yaml",
+                                "/swagger-ui/**", "/swagger-ui.html").permitAll()
                         // Let error responses through; otherwise a 400/500 on a public endpoint becomes 401.
                         .requestMatchers("/error").permitAll()
                         .anyRequest().authenticated())

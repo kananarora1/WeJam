@@ -1,0 +1,156 @@
+openapi: 3.0.1
+info:
+  title: WeJam API
+  version: v1
+servers:
+- description: Local development
+  url: http://localhost:8080
+security:
+- bearerAuth: []
+paths:
+  /api/v1/auth/token:
+    post:
+      operationId: exchange
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TokenRequest"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TokenResponse"
+          description: OK
+      security: []
+      tags:
+      - Auth
+  /api/v1/me:
+    get:
+      operationId: me
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MeResponse"
+          description: OK
+      tags:
+      - Me
+    patch:
+      operationId: updateProfile
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateProfileRequest"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MeResponse"
+          description: OK
+      tags:
+      - Me
+  /api/v1/me/roles:
+    post:
+      operationId: addRole
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AddRoleRequest"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TokenResponse"
+          description: OK
+      tags:
+      - Me
+components:
+  schemas:
+    AddRoleRequest:
+      type: object
+      properties:
+        role:
+          type: string
+          description: Only HOST or VENUE_ADMIN are accepted
+          enum:
+          - USER
+          - HOST
+          - VENUE_ADMIN
+      required:
+      - role
+    MeResponse:
+      type: object
+      properties:
+        displayName:
+          type: string
+          description: Null until the user completes their profile
+          nullable: true
+        id:
+          type: string
+          format: uuid
+        phone:
+          type: string
+          description: E.164; null for non-phone sign-in methods
+          nullable: true
+        roles:
+          type: array
+          items:
+            type: string
+            enum:
+            - USER
+            - HOST
+            - VENUE_ADMIN
+          uniqueItems: true
+      required:
+      - displayName
+      - id
+      - phone
+      - roles
+    TokenRequest:
+      type: object
+      properties:
+        firebaseIdToken:
+          type: string
+          minLength: 1
+      required:
+      - firebaseIdToken
+    TokenResponse:
+      type: object
+      properties:
+        accessToken:
+          type: string
+        expiresIn:
+          type: integer
+          format: int64
+          description: Seconds until accessToken expires
+        tokenType:
+          type: string
+          example: Bearer
+      required:
+      - accessToken
+      - expiresIn
+      - tokenType
+    UpdateProfileRequest:
+      type: object
+      properties:
+        displayName:
+          type: string
+          maxLength: 50
+          minLength: 0
+      required:
+      - displayName
+  securitySchemes:
+    bearerAuth:
+      bearerFormat: JWT
+      scheme: bearer
+      type: http
