@@ -4,6 +4,7 @@ import com.example.wejam.auth.dto.AddRoleRequest;
 import com.example.wejam.auth.dto.MeResponse;
 import com.example.wejam.auth.dto.TokenResponse;
 import com.example.wejam.auth.dto.UpdateProfileRequest;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.UUID;
 
+@Tag(name = "Me")
 @RestController
 @RequestMapping("/api/v1/me")
 class MeController {
