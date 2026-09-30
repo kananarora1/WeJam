@@ -48,3 +48,9 @@ Log of completed steps (what was built, key decisions). Newest at the bottom.
 - Animations judged on a release build: debug (JIT) builds start ~2–3 s slower and stall on first build of each screen.
 - Firebase: Android app registered via `flutterfire configure` (`firebase_options.dart`, `google-services.json`); debug SHA-1/SHA-256 registered.
 - Tests: 8 controller unit tests (fake service), 3 OTP widget tests. Verified on a physical Android 16 phone with test number +91 1234567890 / 123456.
+
+## Fix — Firebase API key exposure (2026-09-30)
+- GitHub flagged the Firebase Android API key committed in M1a (`firebase_options.dart`, `google-services.json`).
+- Both files gitignored and untracked; setup documented in `mobile/README.md` (replaces the Flutter template README). ADR-017 supersedes ADR-016.
+- Key rotation and restriction done in Google Cloud console (manual).
+- Removed a stray duplicate branch ref `main 2` (created when the Desktop folder was moved; pointed at an ancestor of main).

@@ -41,6 +41,9 @@ backend/build/
 /backend/.nb-gradle/
 
 ### Mobile (Flutter / Dart) ###
+# Firebase client config: contains the project's API key. Generate locally with `flutterfire configure` (see mobile/README.md).
+mobile/lib/firebase_options.dart
+mobile/android/app/google-services.json
 mobile/.dart_tool/
 mobile/.flutter-plugins
 mobile/.flutter-plugins-dependencies
