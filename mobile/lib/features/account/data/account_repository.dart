@@ -26,6 +26,15 @@ class AccountRepository {
 
   Future<Account> me() => _call(() async => _toAccount(await _api.me.me()));
 
+  /// [name] is sent as-is; the caller trims it (the backend trims and validates too).
+  Future<Account> updateDisplayName(String name) => _call(
+    () async => _toAccount(
+      await _api.me.updateProfile(
+        body: UpdateProfileRequest(displayName: name),
+      ),
+    ),
+  );
+
   static Future<T> _call<T>(Future<T> Function() request) async {
     try {
       return await request();

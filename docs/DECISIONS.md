@@ -91,3 +91,8 @@ ADR-style log: context → decision → why.
 - **Context:** §7 contract flow requires a Dart client generated from `docs/api/openapi.yaml`; the app needs the backend JWT on every call and must survive its 1h expiry (ADR-005).
 - **Decision:** `swagger_parser` (pure Dart) generates Retrofit/Dio clients + json_serializable models into `lib/core/api/generated/`, committed so the app builds after clone. The app JWT lives only in memory (`AppTokenStore`); on cold start and on any 401 the app re-exchanges a (force-refreshed) Firebase ID token, once, then retries once. Domain types (`Account`, `Role`) wrap the generated DTOs.
 - **Why:** No Java/Node toolchain for generation; null-safety comes straight from the spec's required/nullable annotations. Not persisting the JWT means nothing sensitive of ours is stored on the device; Firebase already persists its own session. Wrapping DTOs keeps regenerated code from rippling through the UI.
+
+## ADR-019: Onboarding asks only for a name; roles are offered when needed
+- **Context:** Wireframe 1.4 combines name and "I'm here to" (play or listen / host / run a venue) on one screen.
+- **Decision:** Onboarding collects only the display name. HOST / VENUE_ADMIN will be offered where they first matter (e.g. "Start hosting" / "Run a venue" from Profile, in the venue/host steps). `POST /me/roles` already supports this.
+- **Why:** Shortest path into the app; most users only play or listen. Asking for a role before the user has seen what hosting or venue admin involves adds a decision with no context.

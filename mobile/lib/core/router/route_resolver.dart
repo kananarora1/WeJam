@@ -9,6 +9,7 @@ abstract final class Routes {
   static const otp = '/otp';
   static const loading = '/loading';
   static const sessionError = '/session-error';
+  static const name = '/name';
   static const profile = '/profile';
 }
 
@@ -29,6 +30,9 @@ String resolveRoute({
   if (session.isLoading) return Routes.loading;
   if (session.hasError) return Routes.sessionError;
   // Signed in to Firebase but the session hasn't started building yet.
-  if (session.value == null) return Routes.loading;
+  final account = session.value;
+  if (account == null) return Routes.loading;
+  // Nobody gets past onboarding without a name, even after closing the app halfway.
+  if (account.displayName == null) return Routes.name;
   return Routes.profile;
 }

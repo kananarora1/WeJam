@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../features/account/presentation/name_screen.dart';
 import '../../features/account/presentation/profile_screen.dart';
 import '../../features/account/presentation/session_controller.dart';
 import '../../features/account/presentation/session_error_screen.dart';
@@ -46,6 +47,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         const LoadingScreen(message: 'Getting you in…'),
       ),
       _fadeRoute(Routes.sessionError, const SessionErrorScreen()),
+      _fadeRoute(Routes.name, const NameScreen()),
       _fadeRoute(Routes.profile, const ProfileScreen()),
     ],
   );

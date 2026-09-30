@@ -64,3 +64,10 @@ Log of completed steps (what was built, key decisions). Newest at the bottom.
 - Routing extracted to pure `resolveRoute` (splash / phone / otp / loading / session-error / profile). New screens: "Getting you in…", "That didn't land" (Try again / Sign out), minimal Profile (name, phone, role chips, sign out). Interim signed-in screen removed.
 - `PhoneAuthService.getIdToken({forceRefresh})` added.
 - Tests: 30 total (+8 route resolver, +7 session controller, +5 interceptor with a scripted Dio adapter).
+
+## Step M1c — Name onboarding (2026-10-01)
+- "What should we call you?" screen (`NameScreen` + `NameController`): trimmed 1–50 chars validated client-side, `PATCH /api/v1/me` via `AccountRepository.updateDisplayName`, backend ProblemDetail shown inline, "Not you? Sign out" escape.
+- `SessionController.accountUpdated` swaps in the profile returned by the PATCH (no `/me` refetch).
+- Route resolver: session ready + no display name → `/name` (so an interrupted onboarding resumes on next launch); with a name → `/profile`.
+- Role choice deliberately not part of onboarding (ADR-019).
+- Tests: 37 total (+6 name controller, +1 resolver); shared test fakes moved to `test/support/account_fakes.dart`.
