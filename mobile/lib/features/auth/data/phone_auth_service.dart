@@ -18,6 +18,10 @@ abstract interface class PhoneAuthService {
     required String smsCode,
   });
 
+  /// The signed-in user's Firebase ID token, to exchange for an app JWT.
+  /// [forceRefresh] fetches a new one even if the cached token is still valid.
+  Future<String> getIdToken({bool forceRefresh = false});
+
   Future<void> signOut();
 }
 
@@ -85,6 +89,21 @@ class FirebasePhoneAuthService implements PhoneAuthService {
         smsCode: smsCode,
       );
       await _auth.signInWithCredential(credential);
+    } catch (e) {
+      throw _toFailure(e);
+    }
+  }
+
+  @override
+  Future<String> getIdToken({bool forceRefresh = false}) async {
+    final user = _auth.currentUser;
+    if (user == null) throw const AuthFailure('You are signed out.');
+    try {
+      final token = await user.getIdToken(forceRefresh);
+      if (token == null) throw const AuthFailure('You are signed out.');
+      return token;
+    } on AuthFailure {
+      rethrow;
     } catch (e) {
       throw _toFailure(e);
     }

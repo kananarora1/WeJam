@@ -1,0 +1,13 @@
+# Generates the API client from the backend's committed contract (see CLAUDE.md §7).
+# Regenerate after any API change:
+#   dart run swagger_parser && dart run build_runner build --delete-conflicting-outputs
+swagger_parser:
+  schema_path: ../docs/api/openapi.yaml
+  output_directory: lib/core/api/generated
+  name: wejam_api
+  language: dart
+  json_serializer: json_serializable
+  root_client: true
+  root_client_name: WeJamApi
+  export_file: true
+  put_clients_in_folder: true

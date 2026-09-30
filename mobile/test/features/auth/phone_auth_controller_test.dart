@@ -37,6 +37,9 @@ class FakePhoneAuthService implements PhoneAuthService {
   }
 
   @override
+  Future<String> getIdToken({bool forceRefresh = false}) async => 'id-token';
+
+  @override
   Future<void> signOut() async {}
 }
 
