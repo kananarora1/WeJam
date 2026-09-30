@@ -77,7 +77,12 @@ ADR-style log: context → decision → why.
 - **Decision:** A single `redirect` computes the target route from `authStateProvider` and `PhoneAuthState.awaitingCode`; a `ValueNotifier` bumped by `ref.listen` triggers re-evaluation. Screens only change state, never call `context.go`.
 - **Why:** One place defines where a user may be; impossible to reach OTP without a pending verification or phone screens while signed in; no duplicated navigation on rebuilds.
 
-## ADR-016: Firebase client config committed
+## ADR-016: Firebase client config committed — SUPERSEDED by ADR-017
 - **Context:** `flutterfire configure` generates `lib/firebase_options.dart` and `android/app/google-services.json` containing the project id, app id and a Firebase API key.
 - **Decision:** Commit them.
 - **Why:** They are public client identifiers shipped inside every APK, not secrets (the service-account key stays in `~/.config/wejam`). Committing lets the app build right after clone. Follow-up before any public release: restrict the API key to the Android package + SHA in Google Cloud.
+
+## ADR-017: Firebase client config not committed; API key restricted
+- **Context:** ADR-016 committed `firebase_options.dart` / `google-services.json`. After pushing, GitHub secret scanning flagged the Firebase API key; it was unrestricted, so anyone could call the project's Firebase APIs with it.
+- **Decision:** Both files are gitignored and untracked; each developer generates them with `flutterfire configure` (mobile/README.md). The leaked key is rotated: new key restricted to the Android app (package + SHA-1) and to the Identity Toolkit, Token Service and Firebase Installations APIs; old key deleted. History is not rewritten — the old key is dead after rotation.
+- **Why:** Although Firebase client keys ship inside every APK, an unrestricted key in a public repo invites quota abuse, and secret-scanning alerts should not be normalised. Restriction limits what a copied key can do; not committing avoids the next alert.

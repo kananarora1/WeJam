@@ -1,17 +1,31 @@
-# wejam
+# WeJam — mobile
 
-WeJam - live jam nights
+Flutter app (Android for now). Open this folder in VS Code.
 
-## Getting Started
+## One-time setup
 
-This project is a starting point for a Flutter application.
+Firebase client config is **not committed** (it contains the project's API key). Generate it locally:
 
-A few resources to get you started if this is your first Flutter project:
+```bash
+# Firebase CLI + FlutterFire CLI, logged in to the account that owns wejam-dev
+firebase login
+dart pub global activate flutterfire_cli
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+cd mobile
+flutterfire configure --project=wejam-dev --platforms=android \
+  --android-package-name=com.kananarora.wejam --out=lib/firebase_options.dart
+```
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+This writes `lib/firebase_options.dart` and `android/app/google-services.json` (both gitignored).
+
+## Run
+
+```bash
+cd mobile
+flutter devices
+flutter run -d <device-id>            # debug: hot reload, slower animations
+flutter run --profile -d <device-id>  # judge animations / performance
+flutter test && flutter analyze
+```
+
+Phone login during development uses the Firebase test number `+91 1234567890`, code `123456`.
