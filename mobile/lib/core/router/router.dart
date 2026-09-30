@@ -2,42 +2,51 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../features/account/presentation/profile_screen.dart';
+import '../../features/account/presentation/session_controller.dart';
+import '../../features/account/presentation/session_error_screen.dart';
 import '../../features/auth/presentation/auth_providers.dart';
 import '../../features/auth/presentation/otp_screen.dart';
 import '../../features/auth/presentation/phone_screen.dart';
-import '../../features/auth/presentation/signed_in_screen.dart';
 import '../../features/auth/presentation/splash_screen.dart';
 import '../theme/tokens.dart';
+import '../widgets/loading_screen.dart';
+import 'route_resolver.dart';
 
-abstract final class Routes {
-  static const splash = '/splash';
-  static const phone = '/phone';
-  static const otp = '/otp';
-  static const home = '/home';
-}
+export 'route_resolver.dart' show Routes;
 
-/// Navigation is derived from state, never pushed by screens:
-/// splash until it has played (it waits for the session check itself); signed out → phone
-/// (or otp once a code was sent); signed in → home.
+/// Navigation is derived from state (see [resolveRoute]), never pushed by screens.
 final routerProvider = Provider<GoRouter>((ref) {
   // go_router re-runs `redirect` whenever this notifies; we bump it on every relevant state change.
   final refresh = ValueNotifier<int>(0);
-  ref.listen(splashCompletedProvider, (_, _) => refresh.value++);
-  ref.listen(authStateProvider, (_, _) => refresh.value++);
-  ref.listen(
-    phoneAuthControllerProvider.select((s) => s.awaitingCode),
-    (_, _) => refresh.value++,
-  );
+  void bump(Object? _, Object? _) => refresh.value++;
+  ref.listen(splashCompletedProvider, bump);
+  ref.listen(authStateProvider, bump);
+  ref.listen(phoneAuthControllerProvider.select((s) => s.awaitingCode), bump);
+  ref.listen(sessionControllerProvider, bump);
 
   final router = GoRouter(
     initialLocation: Routes.splash,
     refreshListenable: refresh,
-    redirect: (context, state) => _redirect(ref, state.matchedLocation),
+    redirect: (context, state) {
+      final target = resolveRoute(
+        splashCompleted: ref.read(splashCompletedProvider),
+        auth: ref.read(authStateProvider),
+        awaitingCode: ref.read(phoneAuthControllerProvider).awaitingCode,
+        session: ref.read(sessionControllerProvider),
+      );
+      return state.matchedLocation == target ? null : target;
+    },
     routes: [
       _fadeRoute(Routes.splash, const SplashScreen()),
       _fadeRoute(Routes.phone, const PhoneScreen()),
       _fadeRoute(Routes.otp, const OtpScreen()),
-      _fadeRoute(Routes.home, const SignedInScreen()),
+      _fadeRoute(
+        Routes.loading,
+        const LoadingScreen(message: 'Getting you in…'),
+      ),
+      _fadeRoute(Routes.sessionError, const SessionErrorScreen()),
+      _fadeRoute(Routes.profile, const ProfileScreen()),
     ],
   );
 
@@ -63,18 +72,3 @@ GoRoute _fadeRoute(String path, Widget screen) => GoRoute(
     ),
   ),
 );
-
-String? _redirect(Ref ref, String location) {
-  if (!ref.read(splashCompletedProvider)) return Routes.splash;
-  final auth = ref.read(authStateProvider);
-  if (auth.isLoading && !auth.hasValue) return Routes.splash;
-
-  // An error reading the session is treated as signed out: the user can always log in again.
-  final signedIn = auth.value != null;
-  final target = signedIn
-      ? Routes.home
-      : ref.read(phoneAuthControllerProvider).awaitingCode
-      ? Routes.otp
-      : Routes.phone;
-  return location == target ? null : target;
-}

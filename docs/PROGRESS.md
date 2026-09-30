@@ -54,3 +54,13 @@ Log of completed steps (what was built, key decisions). Newest at the bottom.
 - Both files gitignored and untracked; setup documented in `mobile/README.md` (replaces the Flutter template README). ADR-017 supersedes ADR-016.
 - Key rotation and restriction done in Google Cloud console (manual).
 - Removed a stray duplicate branch ref `main 2` (created when the Desktop folder was moved; pointed at an ancestor of main).
+
+## Step M1b — App ↔ backend session (2026-09-30)
+- Deps: `dio`, `retrofit`, `json_annotation`; dev: `swagger_parser`, `build_runner`, `retrofit_generator`, `json_serializable`.
+- Generated client from `docs/api/openapi.yaml` (`mobile/swagger_parser.yaml` → `lib/core/api/generated/`, committed incl. `.g.dart`). Backend API unchanged.
+- `ApiConfig.baseUrl` from `--dart-define=API_BASE_URL` (default `http://10.0.2.2:8080` for the emulator). Cleartext HTTP allowed in debug/profile manifests only.
+- `AppTokenStore` (app JWT in memory only), `AuthInterceptor` (Bearer header; on 401 one re-authentication + one retry; token-exchange path excluded), `ApiFailure` (network / ProblemDetail / 5xx → user copy).
+- `AccountRepository` (exchange, me → domain `Account`/`Role`), `SessionController` (AsyncNotifier: Firebase uid → force-refreshable ID token → app JWT → `/me`; shared in-flight re-auth; signs out when a fresh token is rejected; Riverpod auto-retry disabled).
+- Routing extracted to pure `resolveRoute` (splash / phone / otp / loading / session-error / profile). New screens: "Getting you in…", "That didn't land" (Try again / Sign out), minimal Profile (name, phone, role chips, sign out). Interim signed-in screen removed.
+- `PhoneAuthService.getIdToken({forceRefresh})` added.
+- Tests: 30 total (+8 route resolver, +7 session controller, +5 interceptor with a scripted Dio adapter).
