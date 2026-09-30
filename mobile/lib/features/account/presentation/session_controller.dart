@@ -39,6 +39,9 @@ class SessionController extends AsyncNotifier<Account?> {
   Future<bool> reauthenticate() => _reauthInFlight ??= _reauthenticate()
       .whenComplete(() => _reauthInFlight = null);
 
+  /// A write endpoint returned the updated profile; use it instead of refetching `/me`.
+  void accountUpdated(Account account) => state = AsyncData(account);
+
   /// For the error screen's "Try again".
   Future<void> retry() async {
     ref.invalidateSelf();

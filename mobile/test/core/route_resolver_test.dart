@@ -69,8 +69,17 @@ void main() {
     );
   });
 
+  test('a ready session without a name goes to the name screen', () {
+    const unnamed = Account(
+      id: 'a1',
+      phone: '+911234567890',
+      displayName: null,
+      roles: {Role.user},
+    );
+    expect(resolve(session: const AsyncData(unnamed)), Routes.name);
+  });
 
-  test('a ready session goes to profile', () {
+  test('a ready session with a name goes to profile', () {
     expect(resolve(), Routes.profile);
   });
 }
