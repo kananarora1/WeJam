@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "966346149063",
+    "project_id": "wejam-dev",
+    "storage_bucket": "wejam-dev.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:966346149063:android:90e554f807ba703c6682e2",
+        "android_client_info": {
+          "package_name": "com.kananarora.wejam"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAdnqzw6dAJqg7tJ3M0XVj2nEefSRVpY3A"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

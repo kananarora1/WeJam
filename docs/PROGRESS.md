@@ -36,3 +36,15 @@ Log of completed steps (what was built, key decisions). Newest at the bottom.
 - springdoc config: OpenAPI 3.0, keys sorted, only `/api/**` documented, `application/json` responses; `SPRINGDOC_ENABLED=false` hides docs + UI.
 - Security: `/v3/api-docs`, `/v3/api-docs/**`, `/v3/api-docs.yaml`, `/swagger-ui/**`, `/swagger-ui.html` public.
 - `OpenApiSpecTest` regenerates `docs/api/openapi.yaml` on every `./mvnw test` and asserts operations, security and schema nullability; output verified deterministic and identical to the live app's spec.
+
+## Step M1a — Flutter project, design system, Firebase phone login (2026-09-30)
+- `flutter create` in `mobile/` — Android only for now; application id `com.kananarora.wejam`; app label "WeJam". Android launch screen themed dark (`#141110`, no icon on Android 12+) so launch → Flutter splash has no white flash.
+- Deps: `flutter_riverpod` 3.4, `go_router` 18, `firebase_core` 4.15, `firebase_auth` 6.7.
+- Design system from the wireframe (Foundations): `AppTokens` ThemeExtension (dark colors) + `AppSpace`/`AppRadii`/`AppMotion`/`AppFonts` constants; `buildDarkTheme()` type scale (Instrument Serif display, Jost UI). Fonts bundled as assets (OFL licences included). IBM Plex Mono dropped (not used on app screens).
+- Shared widgets: `PrimaryButton` (amber pill, EQ-bars loading state), `EqBars` (freezes under reduced motion).
+- Auth feature: `PhoneAuthService` interface + `FirebasePhoneAuthService` (callback API → Future, Firebase error codes → friendly copy, raw error logged via `debugPrint`); `PhoneAuthController` (Notifier) for phone → code flow; `authStateProvider` (StreamProvider over Firebase auth state).
+- Screens: Splash (cold start only: wordmark focuses in from a blur, holds, waits for the session check, then pops out toward the viewer; the router leaves the splash only when it reports completion), Phone (1.2), OTP (1.3: six boxes, auto-submit, 30 s resend cooldown, back = change number), interim "You're in" + sign out.
+- go_router with state-derived redirects (splash / phone / otp / home); screens never navigate imperatively. All routes cross-fade (the platform zoom fought the splash pop-out).
+- Animations judged on a release build: debug (JIT) builds start ~2–3 s slower and stall on first build of each screen.
+- Firebase: Android app registered via `flutterfire configure` (`firebase_options.dart`, `google-services.json`); debug SHA-1/SHA-256 registered.
+- Tests: 8 controller unit tests (fake service), 3 OTP widget tests. Verified on a physical Android 16 phone with test number +91 1234567890 / 123456.
