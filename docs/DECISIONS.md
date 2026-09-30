@@ -66,3 +66,18 @@ ADR-style log: context → decision → why.
 - **Context:** CLAUDE.md §7 requires the spec committed at `docs/api/openapi.yaml` and updated whenever the API changes.
 - **Decision:** `OpenApiSpecTest` fetches `/v3/api-docs.yaml` from the test context and writes the file on every test run. Output made deterministic (sorted keys, fixed server URL, only `/api/**`). OpenAPI 3.0 for Dart generator compatibility.
 - **Why:** Reuses the existing Testcontainers context — no running app or env vars needed (unlike `springdoc-openapi-maven-plugin`). API changes show up in `git status` after `./mvnw test`, so the spec can't silently drift.
+
+## ADR-014: Android-first, physical device over wireless debugging
+- **Context:** No Xcode; ~17 GB free disk; emulator fell back to software rendering under memory pressure.
+- **Decision:** Only the `android` platform is generated for now; develop on a physical phone via wireless adb, emulator (`wejam_pixel`) as backup. iOS added later with `flutter create --platforms ios .`.
+- **Why:** Lightest setup with hot reload; avoids a ~15 GB Xcode install. The backend must be reached via the Mac's LAN IP (not `10.0.2.2`), so the base URL will be configurable (M1b).
+
+## ADR-015: Navigation derived from state (go_router redirect)
+- **Context:** Auth screens need to move between splash, phone, OTP and home as Firebase/session state changes (including auto-verification and session restore).
+- **Decision:** A single `redirect` computes the target route from `authStateProvider` and `PhoneAuthState.awaitingCode`; a `ValueNotifier` bumped by `ref.listen` triggers re-evaluation. Screens only change state, never call `context.go`.
+- **Why:** One place defines where a user may be; impossible to reach OTP without a pending verification or phone screens while signed in; no duplicated navigation on rebuilds.
+
+## ADR-016: Firebase client config committed
+- **Context:** `flutterfire configure` generates `lib/firebase_options.dart` and `android/app/google-services.json` containing the project id, app id and a Firebase API key.
+- **Decision:** Commit them.
+- **Why:** They are public client identifiers shipped inside every APK, not secrets (the service-account key stays in `~/.config/wejam`). Committing lets the app build right after clone. Follow-up before any public release: restrict the API key to the Android package + SHA in Google Cloud.
