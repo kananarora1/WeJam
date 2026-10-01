@@ -7,18 +7,21 @@ import com.example.wejam.venue.dto.VenueResponse;
 import com.example.wejam.venue.dto.VenueSummary;
 import com.example.wejam.venue.exception.SpaceNotFoundException;
 import com.example.wejam.venue.exception.VenueNotFoundException;
-import com.example.wejam.venue.model.GearItem;
 import com.example.wejam.venue.model.Space;
 import com.example.wejam.venue.model.Venue;
 import com.example.wejam.venue.repository.SpaceRepository;
 import com.example.wejam.venue.repository.VenueRepository;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
 
-/** All ownership checks live here: a venue someone else owns is reported as not found. */
+/**
+ * All authorization lives here (CLAUDE.md §6): the role check for creating, and ownership checks, where a venue
+ * someone else owns is reported as not found.
+ */
 @Service
 @Transactional
 public class VenueService {
@@ -31,6 +34,7 @@ public class VenueService {
         this.spaceRepository = spaceRepository;
     }
 
+    @PreAuthorize("hasRole('VENUE_ADMIN')")
     public VenueResponse create(UUID ownerId, VenueRequest request) {
         Venue venue = new Venue(ownerId);
         apply(venue, request);
@@ -49,7 +53,7 @@ public class VenueService {
         return withSpaces(venue);
     }
 
-    /** Spaces and gear go with it (ON DELETE CASCADE). */
+    /** Its spaces go with it (ON DELETE CASCADE). */
     public void delete(UUID ownerId, UUID venueId) {
         venueRepository.delete(ownedVenue(ownerId, venueId));
     }
@@ -98,10 +102,7 @@ public class VenueService {
     }
 
     private static void apply(Space space, SpaceRequest request) {
-        List<GearItem> gear = request.gear().stream()
-                .map(g -> new GearItem(g.name().strip(), blankToNull(g.details())))
-                .toList();
-        space.update(request.name().strip(), request.capacity(), gear);
+        space.update(request.name().strip(), request.capacity());
     }
 
     private static String blankToNull(String value) {

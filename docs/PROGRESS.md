@@ -85,3 +85,10 @@ Log of completed steps (what was built, key decisions). Newest at the bottom.
 - `auth`, `venue` and `common` split into `controller/ service/ repository/ model/ dto/ exception/ config/` (+ `auth/firebase/`, `common/web/`); tests mirror the layout. Moves done with `git mv` so history follows the files.
 - Visibility widened only where a sub-package boundary required it: `FirebaseAdminTokenVerifier` (class + constructor) and `JwtService.ROLES_CLAIM` are now public. Controllers and config classes stay package-private.
 - No behaviour or API change: 46/46 tests pass, `docs/api/openapi.yaml` byte-identical, real-Firebase boot verified. Convention added to CLAUDE.md §6.
+
+## Fix — Align with the updated CLAUDE.md (2026-10-02)
+- **Gear list removed (BYOI):** Flyway V4 drops `space_gear`; `GearItem`/`GearItemDto` deleted; spaces are name + capacity only. Spec and Dart client regenerated (stale generated files removed; regeneration now clears the folder first).
+- **Role check moved to the service layer** (§6): `@PreAuthorize("hasRole('VENUE_ADMIN')")` now on `VenueService.create` instead of the controller.
+- CLAUDE.md: commit-tag format `[area] - message`, no-AI-trailer rule and layer sub-package convention restored.
+- Plan change: availability slots move to step 6 (events + slots) per the new build order; step 3's remainder is FSSAI number, hosting mode, sound policy + curfew, house rules, `verification_status`.
+- Tests: 46 backend, 37 mobile — all pass.

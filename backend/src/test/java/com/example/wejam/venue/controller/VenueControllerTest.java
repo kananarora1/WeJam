@@ -30,10 +30,7 @@ class VenueControllerTest {
              "city":"Bengaluru","latitude":12.9784,"longitude":77.6408}
             """;
     private static final String SPACE = """
-            {"name":"Main floor","capacity":60,"gear":[
-              {"name":"PA system","details":"2 + 2 monitors"},
-              {"name":"Drum kit","details":"5-pc"},
-              {"name":"Keyboard","details":null}]}
+            {"name":"Main floor","capacity":60}
             """;
 
     @Autowired
@@ -57,7 +54,7 @@ class VenueControllerTest {
     }
 
     @Test
-    void createThenGetRoundTripsVenueSpacesAndGearOrder() {
+    void createThenGetRoundTripsVenueAndSpaces() {
         String venueId = createVenue(admin);
         assertThat(send(mvc.post().uri("/api/v1/venues/{id}/spaces", venueId), admin, SPACE)).hasStatus(201);
 
@@ -70,10 +67,7 @@ class VenueControllerTest {
                         json -> json.assertThat().extractingPath("$.name").isEqualTo("Amber Room"),
                         json -> json.assertThat().extractingPath("$.latitude").isEqualTo(12.9784),
                         json -> json.assertThat().extractingPath("$.spaces[0].name").isEqualTo("Main floor"),
-                        json -> json.assertThat().extractingPath("$.spaces[0].capacity").isEqualTo(60),
-                        json -> json.assertThat().extractingPath("$.spaces[0].gear[*].name").asArray()
-                                .containsExactly("PA system", "Drum kit", "Keyboard"),
-                        json -> json.assertThat().extractingPath("$.spaces[0].gear[2].details").isNull());
+                        json -> json.assertThat().extractingPath("$.spaces[0].capacity").isEqualTo(60));
     }
 
     @Test
@@ -123,18 +117,18 @@ class VenueControllerTest {
     }
 
     @Test
-    void invalidGearAndCapacityAreRejected() {
+    void invalidSpaceIsRejected() {
         String venueId = createVenue(admin);
         String invalid = """
-                {"name":"Rooftop","capacity":0,"gear":[{"name":"","details":"x"}]}
+                {"name":"","capacity":0}
                 """;
 
         assertThat(send(mvc.post().uri("/api/v1/venues/{id}/spaces", venueId), admin, invalid))
                 .hasStatus(400)
                 .bodyJson()
                 .satisfies(
-                        json -> json.assertThat().extractingPath("$.errors.capacity").isNotNull(),
-                        json -> json.assertThat().extractingPath("$.errors['gear[0].name']").isNotNull());
+                        json -> json.assertThat().extractingPath("$.errors.name").isNotNull(),
+                        json -> json.assertThat().extractingPath("$.errors.capacity").isNotNull());
     }
 
     @Test
@@ -148,25 +142,22 @@ class VenueControllerTest {
     }
 
     @Test
-    void updatingSpaceReplacesGearInOrder() {
+    void updatingSpaceChangesNameAndCapacity() {
         String venueId = createVenue(admin);
         String spaceId = read(body(send(mvc.post().uri("/api/v1/venues/{id}/spaces", venueId), admin, SPACE)), "$.id");
 
         assertThat(send(mvc.put().uri("/api/v1/venues/{v}/spaces/{s}", venueId, spaceId), admin, """
-                {"name":"Main floor","capacity":80,"gear":[{"name":"Guitar amps","details":"x 2"}]}
+                {"name":"Rooftop","capacity":80}
                 """))
                 .hasStatusOk()
                 .bodyJson()
                 .satisfies(
-                        json -> json.assertThat().extractingPath("$.capacity").isEqualTo(80),
-                        json -> json.assertThat().extractingPath("$.gear[*].name").asArray()
-                                .containsExactly("Guitar amps"));
-        assertThat(jdbc.queryForObject("SELECT count(*) FROM space_gear WHERE space_id = ?",
-                Integer.class, UUID.fromString(spaceId))).isEqualTo(1);
+                        json -> json.assertThat().extractingPath("$.name").isEqualTo("Rooftop"),
+                        json -> json.assertThat().extractingPath("$.capacity").isEqualTo(80));
     }
 
     @Test
-    void deletingVenueCascadesToSpacesAndGear() {
+    void deletingVenueCascadesToSpaces() {
         String venueId = createVenue(admin);
         String spaceId = read(body(send(mvc.post().uri("/api/v1/venues/{id}/spaces", venueId), admin, SPACE)), "$.id");
 
@@ -175,8 +166,6 @@ class VenueControllerTest {
 
         assertThat(get("/api/v1/venues/" + venueId, admin)).hasStatus(404);
         assertThat(jdbc.queryForObject("SELECT count(*) FROM spaces WHERE id = ?",
-                Integer.class, UUID.fromString(spaceId))).isZero();
-        assertThat(jdbc.queryForObject("SELECT count(*) FROM space_gear WHERE space_id = ?",
                 Integer.class, UUID.fromString(spaceId))).isZero();
     }
 

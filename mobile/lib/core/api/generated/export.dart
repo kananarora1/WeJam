@@ -8,7 +8,6 @@ export 'clients/me_client.dart';
 export 'clients/venues_client.dart';
 // Data classes
 export 'models/add_role_request.dart';
-export 'models/gear_item_dto.dart';
 export 'models/me_response.dart';
 export 'models/space_request.dart';
 export 'models/space_response.dart';

@@ -4,15 +4,12 @@
 
 import 'package:json_annotation/json_annotation.dart';
 
-import 'gear_item_dto.dart';
-
 part 'space_response.g.dart';
 
 @JsonSerializable()
 class SpaceResponse {
   const SpaceResponse({
     required this.capacity,
-    required this.gear,
     required this.id,
     required this.name,
   });
@@ -20,7 +17,6 @@ class SpaceResponse {
   factory SpaceResponse.fromJson(Map<String, Object?> json) => _$SpaceResponseFromJson(json);
   
   final int capacity;
-  final List<GearItemDto> gear;
   final String id;
   final String name;
 
