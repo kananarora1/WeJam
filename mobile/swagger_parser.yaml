@@ -1,6 +1,7 @@
 # Generates the API client from the backend's committed contract (see CLAUDE.md §7).
 # Regenerate after any API change:
-#   dart run swagger_parser && dart run build_runner build --delete-conflicting-outputs
+#   rm -rf lib/core/api/generated && dart run swagger_parser && dart run build_runner build --delete-conflicting-outputs
+# (the generator doesn't delete files for schemas that were removed, hence the rm).
 swagger_parser:
   schema_path: ../docs/api/openapi.yaml
   output_directory: lib/core/api/generated

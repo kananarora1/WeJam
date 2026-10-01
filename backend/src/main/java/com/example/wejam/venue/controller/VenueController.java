@@ -10,7 +10,6 @@ import com.example.wejam.venue.service.VenueService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -39,7 +38,6 @@ class VenueController {
 
     @PostMapping("/venues")
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasRole('VENUE_ADMIN')")
     VenueResponse createVenue(@AuthenticationPrincipal Jwt jwt, @Valid @RequestBody VenueRequest request) {
         return venueService.create(CurrentUser.id(jwt), request);
     }

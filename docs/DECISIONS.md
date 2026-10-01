@@ -106,3 +106,8 @@ ADR-style log: context → decision → why.
 - **Context:** Flat module packages grew to ~20 classes (`auth`), mixing controllers, config, entities and exceptions.
 - **Decision:** Keep packaging by feature at the top level (§4), and inside each module use one sub-package per layer (`controller`, `service`, `repository`, `model`, `dto`, `exception`, `config`, plus focused ones like `auth/firebase`).
 - **Why:** Easier to navigate. Trade-off: package-private encapsulation now only works within a layer, so a few cross-layer members had to become public; anything not needed across sub-packages stays package-private.
+
+## ADR-022: No venue gear inventory (BYOI)
+- **Context:** Step 3a modelled a per-space gear list (from wireframe 6.4). The updated product brief says target venues almost never provide instruments or sound gear: hosts bring the setup, performers bring their instruments.
+- **Decision:** Remove the gear list entirely (Flyway V4 `DROP TABLE space_gear`, API fields removed). Equipment is described per event by the host (`event.host_setup`, `event.amplified`) and per participant (`bringing_own_instrument`) in later steps.
+- **Why:** Avoids a flow that depends on venue-provided gear (explicitly out of scope). A forward migration rather than editing V3, because V3 is already applied in existing databases.

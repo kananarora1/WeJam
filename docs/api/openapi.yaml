@@ -253,23 +253,6 @@ components:
           - VENUE_ADMIN
       required:
       - role
-    GearItemDto:
-      type: object
-      properties:
-        details:
-          type: string
-          example: 5-pc
-          maxLength: 60
-          minLength: 0
-          nullable: true
-        name:
-          type: string
-          example: Drum kit
-          maxLength: 40
-          minLength: 0
-      required:
-      - details
-      - name
     MeResponse:
       type: object
       properties:
@@ -307,12 +290,6 @@ components:
           example: 60
           maximum: 1000
           minimum: 1
-        gear:
-          type: array
-          items:
-            $ref: "#/components/schemas/GearItemDto"
-          maxItems: 30
-          minItems: 0
         name:
           type: string
           example: Main floor
@@ -320,7 +297,6 @@ components:
           minLength: 0
       required:
       - capacity
-      - gear
       - name
     SpaceResponse:
       type: object
@@ -328,10 +304,6 @@ components:
         capacity:
           type: integer
           format: int32
-        gear:
-          type: array
-          items:
-            $ref: "#/components/schemas/GearItemDto"
         id:
           type: string
           format: uuid
@@ -339,7 +311,6 @@ components:
           type: string
       required:
       - capacity
-      - gear
       - id
       - name
     TokenRequest:
