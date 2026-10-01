@@ -101,3 +101,8 @@ ADR-style log: context → decision → why.
 - **Context:** The feed (step 5) needs `geography(Point, 4326)` for `ST_DWithin`; CRUD only needs to read/write coordinates. The wireframe shows a pin per space.
 - **Decision:** Store `latitude`/`longitude` as plain columns mapped by JPA; `location` is `GENERATED ALWAYS AS (ST_SetSRID(ST_MakePoint(lng, lat), 4326)::geography) STORED` and not mapped. Location lives on the venue, not on each space.
 - **Why:** No Hibernate Spatial dependency or geometry type-mapping quirks under `ddl-auto=validate`; the geography value can never drift from the coordinates; range CHECKs guard bad input at the DB. Spaces of one venue share an address, and a single point per venue keeps the feed simple.
+
+## ADR-021: Layer sub-packages inside each feature module
+- **Context:** Flat module packages grew to ~20 classes (`auth`), mixing controllers, config, entities and exceptions.
+- **Decision:** Keep packaging by feature at the top level (§4), and inside each module use one sub-package per layer (`controller`, `service`, `repository`, `model`, `dto`, `exception`, `config`, plus focused ones like `auth/firebase`).
+- **Why:** Easier to navigate. Trade-off: package-private encapsulation now only works within a layer, so a few cross-layer members had to become public; anything not needed across sub-packages stays package-private.

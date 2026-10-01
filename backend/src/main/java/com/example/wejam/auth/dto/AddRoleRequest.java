@@ -1,6 +1,6 @@
 package com.example.wejam.auth.dto;
 
-import com.example.wejam.auth.Role;
+import com.example.wejam.auth.model.Role;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 

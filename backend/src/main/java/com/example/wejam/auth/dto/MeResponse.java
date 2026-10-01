@@ -1,7 +1,7 @@
 package com.example.wejam.auth.dto;
 
-import com.example.wejam.auth.Role;
-import com.example.wejam.auth.User;
+import com.example.wejam.auth.model.Role;
+import com.example.wejam.auth.model.User;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.Set;

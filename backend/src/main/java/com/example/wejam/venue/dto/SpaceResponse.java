@@ -1,6 +1,6 @@
 package com.example.wejam.venue.dto;
 
-import com.example.wejam.venue.Space;
+import com.example.wejam.venue.model.Space;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.List;
