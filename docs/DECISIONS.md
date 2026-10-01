@@ -96,3 +96,8 @@ ADR-style log: context → decision → why.
 - **Context:** Wireframe 1.4 combines name and "I'm here to" (play or listen / host / run a venue) on one screen.
 - **Decision:** Onboarding collects only the display name. HOST / VENUE_ADMIN will be offered where they first matter (e.g. "Start hosting" / "Run a venue" from Profile, in the venue/host steps). `POST /me/roles` already supports this.
 - **Why:** Shortest path into the app; most users only play or listen. Asking for a role before the user has seen what hosting or venue admin involves adds a decision with no context.
+
+## ADR-020: Venue location as lat/lng plus a Postgres-generated geography column; one location per venue
+- **Context:** The feed (step 5) needs `geography(Point, 4326)` for `ST_DWithin`; CRUD only needs to read/write coordinates. The wireframe shows a pin per space.
+- **Decision:** Store `latitude`/`longitude` as plain columns mapped by JPA; `location` is `GENERATED ALWAYS AS (ST_SetSRID(ST_MakePoint(lng, lat), 4326)::geography) STORED` and not mapped. Location lives on the venue, not on each space.
+- **Why:** No Hibernate Spatial dependency or geometry type-mapping quirks under `ddl-auto=validate`; the geography value can never drift from the coordinates; range CHECKs guard bad input at the DB. Spaces of one venue share an address, and a single point per venue keeps the feed simple.

@@ -71,3 +71,12 @@ Log of completed steps (what was built, key decisions). Newest at the bottom.
 - Route resolver: session ready + no display name → `/name` (so an interrupted onboarding resumes on next launch); with a name → `/profile`.
 - Role choice deliberately not part of onboarding (ADR-019).
 - Tests: 37 total (+6 name controller, +1 resolver); shared test fakes moved to `test/support/account_fakes.dart`.
+
+## Step 3a — Venues & spaces CRUD (2026-10-01)
+- Flyway V3: `venues` (owner, name, description, address, city, lat/lng with CHECKs, generated `location geography(Point,4326)`), `spaces` (capacity CHECK 1–1000, ON DELETE CASCADE), `space_gear` (ordered name/details). Indexes: `venues(owner_id)` for "my venues", `spaces(venue_id)` for venue detail/cascade. GiST index on `location` deferred to step 5 with the feed query.
+- API (`venue` module, tag "Venues"): create (VENUE_ADMIN), get (any signed-in user), update/delete (owner), `GET /me/venues` (summary with space count via one DTO-projection query), space create/update/delete (owner). Non-owners get 404. PUT = full replacement; strings trimmed; blank optional text → null.
+- Reads without N+1: venue + one entity-graph query for spaces with gear.
+- `common.CurrentUser.id(jwt)` replaces per-controller helpers (MeController refactored).
+- Spec regenerated; Dart client regenerated (`VenuesClient`, 6 new models) — no mobile screens yet (M2).
+- Tests: 46 backend (+11 venue integration tests incl. generated geography value, DB CHECK, cascade, ownership 404, validation). Flyway test now asserts "no pending migrations" instead of a pinned version.
+- Known follow-up: once bookings exist (step 4), deleting a venue/space with bookings must be blocked.

@@ -1,0 +1,23 @@
+package com.example.wejam.venue.dto;
+
+import com.example.wejam.venue.Venue;
+import io.swagger.v3.oas.annotations.media.Schema;
+
+import java.util.List;
+import java.util.UUID;
+
+public record VenueResponse(
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) UUID id,
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) String name,
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED, nullable = true) String description,
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) String addressLine,
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) String city,
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) double latitude,
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) double longitude,
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) List<SpaceResponse> spaces) {
+
+    public static VenueResponse from(Venue venue, List<SpaceResponse> spaces) {
+        return new VenueResponse(venue.getId(), venue.getName(), venue.getDescription(), venue.getAddressLine(),
+                venue.getCity(), venue.getLatitude(), venue.getLongitude(), spaces);
+    }
+}
