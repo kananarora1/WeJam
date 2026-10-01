@@ -80,3 +80,8 @@ Log of completed steps (what was built, key decisions). Newest at the bottom.
 - Spec regenerated; Dart client regenerated (`VenuesClient`, 6 new models) — no mobile screens yet (M2).
 - Tests: 46 backend (+11 venue integration tests incl. generated geography value, DB CHECK, cascade, ownership 404, validation). Flyway test now asserts "no pending migrations" instead of a pinned version.
 - Known follow-up: once bookings exist (step 4), deleting a venue/space with bookings must be blocked.
+
+## Refactor — Layer sub-packages inside modules (2026-10-01)
+- `auth`, `venue` and `common` split into `controller/ service/ repository/ model/ dto/ exception/ config/` (+ `auth/firebase/`, `common/web/`); tests mirror the layout. Moves done with `git mv` so history follows the files.
+- Visibility widened only where a sub-package boundary required it: `FirebaseAdminTokenVerifier` (class + constructor) and `JwtService.ROLES_CLAIM` are now public. Controllers and config classes stay package-private.
+- No behaviour or API change: 46/46 tests pass, `docs/api/openapi.yaml` byte-identical, real-Firebase boot verified. Convention added to CLAUDE.md §6.

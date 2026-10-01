@@ -108,6 +108,7 @@ Kafka, Kubernetes, Elasticsearch, microservices, GraphQL.
 
 **Backend**
 - Layering per module: `controller → service → repository`; DTOs at the API boundary, never expose entities.
+- Inside each module, one sub-package per layer: `controller/`, `service/`, `repository/`, `model/` (entities, enums), `dto/`, `exception/`, `config/`, plus focused ones where needed (e.g. `auth/firebase/`). Keep classes package-private unless another sub-package needs them.
 - Validation with Jakarta Bean Validation; consistent error responses via `@RestControllerAdvice` (problem-details style).
 - Constructor injection only. Immutable DTOs (records).
 - Meaningful tests for anything with logic, concurrency, or constraints (e.g. concurrent join attempts, overlapping slot requests).
