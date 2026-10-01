@@ -5,10 +5,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.web.servlet.assertj.MockMvcTester;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import static com.example.wejam.TestAuth.body;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -26,7 +26,9 @@ class OpenApiSpecTest {
 
     @Test
     void writesSpecToDocs() throws IOException {
-        String yaml = body(mvc.get().uri("/v3/api-docs.yaml").exchange());
+        // Read as UTF-8 explicitly: without a charset MockMvc decodes as ISO-8859-1 and corrupts non-ASCII text.
+        String yaml = mvc.get().uri("/v3/api-docs.yaml").exchange().getResponse()
+                .getContentAsString(StandardCharsets.UTF_8);
         assertThat(yaml).startsWith("openapi: 3.0");
 
         Files.createDirectories(SPEC_FILE.getParent());

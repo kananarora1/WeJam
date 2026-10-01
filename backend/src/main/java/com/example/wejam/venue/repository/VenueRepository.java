@@ -15,10 +15,10 @@ public interface VenueRepository extends JpaRepository<Venue, UUID> {
 
     /** One query with a space count per venue (DTO projection, no entities loaded). */
     @Query("""
-            SELECT new com.example.wejam.venue.dto.VenueSummary(v.id, v.name, v.city, COUNT(s))
+            SELECT new com.example.wejam.venue.dto.VenueSummary(v.id, v.name, v.city, v.verificationStatus, COUNT(s))
             FROM Venue v LEFT JOIN Space s ON s.venue = v
             WHERE v.ownerId = :ownerId
-            GROUP BY v.id, v.name, v.city, v.createdAt
+            GROUP BY v.id, v.name, v.city, v.verificationStatus, v.createdAt
             ORDER BY v.createdAt
             """)
     List<VenueSummary> findSummariesByOwnerId(UUID ownerId);

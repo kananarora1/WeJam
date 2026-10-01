@@ -92,3 +92,11 @@ Log of completed steps (what was built, key decisions). Newest at the bottom.
 - CLAUDE.md: commit-tag format `[area] - message`, no-AI-trailer rule and layer sub-package convention restored.
 - Plan change: availability slots move to step 6 (events + slots) per the new build order; step 3's remainder is FSSAI number, hosting mode, sound policy + curfew, house rules, `verification_status`.
 - Tests: 46 backend, 37 mobile — all pass.
+
+## Step 3b — Venue policies & verification status (2026-10-02)
+- Flyway V5: `fssai_number` (14-digit CHECK; placeholder `00000000000000` only for pre-existing dev rows, default dropped), `hosting_mode` (OPEN/SELF_ONLY), `sound_policy` (ACOUSTIC_ONLY/AMPLIFIED_ALLOWED, default acoustic), `sound_curfew` (local `time`, nullable), `time_zone` (default Asia/Kolkata, not exposed yet), `house_rules`, `verification_status` (PENDING/VERIFIED/REJECTED) + `rejection_reason`; partial unique index on `fssai_number` WHERE VERIFIED.
+- `Venue`: `updateDetails` / `updatePolicies` / `changeFssaiNumber` — a new FSSAI number resets verification to PENDING and clears the rejection reason; other edits keep the status. Verification status never comes from a request.
+- API: VenueRequest/Response + VenueSummary carry the new fields; curfew is `"HH:mm"` both ways (`@JsonFormat`).
+- Fix to step 2c: `OpenApiSpecTest` now decodes the YAML as UTF-8 (MockMvc defaulted to ISO-8859-1 and corrupted `₹`, which broke Dart generation).
+- Spec + Dart client regenerated (venue models + per-model enum types).
+- Tests: 55 backend (+9 venue: defaults, optional curfew/rules, FSSAI format, unknown enums, status not settable, verification reset rule, partial uniqueness, DB CHECKs, summary status), 37 mobile.

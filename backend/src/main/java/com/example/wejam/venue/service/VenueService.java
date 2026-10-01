@@ -97,8 +97,11 @@ public class VenueService {
     }
 
     private static void apply(Venue venue, VenueRequest request) {
-        venue.update(request.name().strip(), blankToNull(request.description()), request.addressLine().strip(),
-                request.city().strip(), request.latitude(), request.longitude());
+        venue.updateDetails(request.name().strip(), blankToNull(request.description()),
+                request.addressLine().strip(), request.city().strip(), request.latitude(), request.longitude());
+        venue.updatePolicies(request.hostingMode(), request.soundPolicy(), request.soundCurfew(),
+                blankToNull(request.houseRules()));
+        venue.changeFssaiNumber(request.fssaiNumber());
     }
 
     private static void apply(Space space, SpaceRequest request) {
