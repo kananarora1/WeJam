@@ -49,7 +49,9 @@ class WeJamApplicationTests {
 
     @Test
     void flywayMigrationsAppliedAndPostgisIsEnabled() {
-        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("2");
+        // Every migration on the classpath is applied (no version pinned, so new migrations don't break this).
+        assertThat(flyway.info().current()).isNotNull();
+        assertThat(flyway.info().pending()).isEmpty();
 
         String postgisVersion = jdbc.queryForObject("SELECT PostGIS_Version()", String.class);
         assertThat(postgisVersion).startsWith("3.5");

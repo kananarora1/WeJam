@@ -74,6 +74,171 @@ paths:
           description: OK
       tags:
       - Me
+  /api/v1/me/venues:
+    get:
+      operationId: myVenues
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/VenueSummary"
+          description: OK
+      tags:
+      - Venues
+  /api/v1/venues:
+    post:
+      operationId: createVenue
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VenueRequest"
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VenueResponse"
+          description: Created
+      tags:
+      - Venues
+  /api/v1/venues/{venueId}:
+    delete:
+      operationId: deleteVenue
+      parameters:
+      - in: path
+        name: venueId
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "204":
+          description: No Content
+      tags:
+      - Venues
+    get:
+      operationId: getVenue
+      parameters:
+      - in: path
+        name: venueId
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VenueResponse"
+          description: OK
+      tags:
+      - Venues
+    put:
+      operationId: updateVenue
+      parameters:
+      - in: path
+        name: venueId
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VenueRequest"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VenueResponse"
+          description: OK
+      tags:
+      - Venues
+  /api/v1/venues/{venueId}/spaces:
+    post:
+      operationId: createSpace
+      parameters:
+      - in: path
+        name: venueId
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SpaceRequest"
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SpaceResponse"
+          description: Created
+      tags:
+      - Venues
+  /api/v1/venues/{venueId}/spaces/{spaceId}:
+    delete:
+      operationId: deleteSpace
+      parameters:
+      - in: path
+        name: venueId
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - in: path
+        name: spaceId
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "204":
+          description: No Content
+      tags:
+      - Venues
+    put:
+      operationId: updateSpace
+      parameters:
+      - in: path
+        name: venueId
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - in: path
+        name: spaceId
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SpaceRequest"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SpaceResponse"
+          description: OK
+      tags:
+      - Venues
 components:
   schemas:
     AddRoleRequest:
@@ -88,6 +253,23 @@ components:
           - VENUE_ADMIN
       required:
       - role
+    GearItemDto:
+      type: object
+      properties:
+        details:
+          type: string
+          example: 5-pc
+          maxLength: 60
+          minLength: 0
+          nullable: true
+        name:
+          type: string
+          example: Drum kit
+          maxLength: 40
+          minLength: 0
+      required:
+      - details
+      - name
     MeResponse:
       type: object
       properties:
@@ -116,6 +298,50 @@ components:
       - id
       - phone
       - roles
+    SpaceRequest:
+      type: object
+      properties:
+        capacity:
+          type: integer
+          format: int32
+          example: 60
+          maximum: 1000
+          minimum: 1
+        gear:
+          type: array
+          items:
+            $ref: "#/components/schemas/GearItemDto"
+          maxItems: 30
+          minItems: 0
+        name:
+          type: string
+          example: Main floor
+          maxLength: 80
+          minLength: 0
+      required:
+      - capacity
+      - gear
+      - name
+    SpaceResponse:
+      type: object
+      properties:
+        capacity:
+          type: integer
+          format: int32
+        gear:
+          type: array
+          items:
+            $ref: "#/components/schemas/GearItemDto"
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+      required:
+      - capacity
+      - gear
+      - id
+      - name
     TokenRequest:
       type: object
       properties:
@@ -149,6 +375,103 @@ components:
           minLength: 0
       required:
       - displayName
+    VenueRequest:
+      type: object
+      properties:
+        addressLine:
+          type: string
+          example: "12th Main, HAL 2nd Stage"
+          maxLength: 200
+          minLength: 0
+        city:
+          type: string
+          example: Bengaluru
+          maxLength: 80
+          minLength: 0
+        description:
+          type: string
+          maxLength: 1000
+          minLength: 0
+          nullable: true
+        latitude:
+          type: number
+          format: double
+          example: 12.9784
+          exclusiveMaximum: false
+          exclusiveMinimum: false
+          maximum: 90
+          minimum: -90
+        longitude:
+          type: number
+          format: double
+          example: 77.6408
+          exclusiveMaximum: false
+          exclusiveMinimum: false
+          maximum: 180
+          minimum: -180
+        name:
+          type: string
+          example: Amber Room
+          maxLength: 80
+          minLength: 0
+      required:
+      - addressLine
+      - city
+      - latitude
+      - longitude
+      - name
+    VenueResponse:
+      type: object
+      properties:
+        addressLine:
+          type: string
+        city:
+          type: string
+        description:
+          type: string
+          nullable: true
+        id:
+          type: string
+          format: uuid
+        latitude:
+          type: number
+          format: double
+        longitude:
+          type: number
+          format: double
+        name:
+          type: string
+        spaces:
+          type: array
+          items:
+            $ref: "#/components/schemas/SpaceResponse"
+      required:
+      - addressLine
+      - city
+      - description
+      - id
+      - latitude
+      - longitude
+      - name
+      - spaces
+    VenueSummary:
+      type: object
+      properties:
+        city:
+          type: string
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        spaceCount:
+          type: integer
+          format: int64
+      required:
+      - city
+      - id
+      - name
+      - spaceCount
   securitySchemes:
     bearerAuth:
       bearerFormat: JWT

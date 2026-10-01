@@ -22,6 +22,16 @@ public final class TestAuth {
         return JsonPath.read(body(exchange(mvc, "fake:" + firebaseUid)), "$.accessToken");
     }
 
+    /** Logs in, then self-assigns [role]; returns the JWT that carries it. */
+    public static String accessTokenWithRole(MockMvcTester mvc, String firebaseUid, String role) {
+        MvcTestResult result = mvc.post().uri("/api/v1/me/roles")
+                .header("Authorization", bearer(accessTokenFor(mvc, firebaseUid)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"role\":\"" + role + "\"}")
+                .exchange();
+        return JsonPath.read(body(result), "$.accessToken");
+    }
+
     public static MvcTestResult exchange(MockMvcTester mvc, String firebaseIdToken) {
         return mvc.post().uri("/api/v1/auth/token")
                 .contentType(MediaType.APPLICATION_JSON)
