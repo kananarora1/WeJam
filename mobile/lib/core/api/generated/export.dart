@@ -19,6 +19,12 @@ export 'models/venue_response.dart';
 export 'models/venue_summary.dart';
 export 'models/add_role_request_role.dart';
 export 'models/me_response_roles.dart';
+export 'models/venue_request_hosting_mode.dart';
+export 'models/venue_request_sound_policy.dart';
+export 'models/venue_response_hosting_mode.dart';
+export 'models/venue_response_sound_policy.dart';
+export 'models/venue_response_verification_status.dart';
+export 'models/venue_summary_verification_status.dart';
 // Root client
 export 'we_jam_api.dart';
 

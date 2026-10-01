@@ -11,6 +11,9 @@ VenueSummary _$VenueSummaryFromJson(Map<String, dynamic> json) => VenueSummary(
   id: json['id'] as String,
   name: json['name'] as String,
   spaceCount: (json['spaceCount'] as num).toInt(),
+  verificationStatus: VenueSummaryVerificationStatus.fromJson(
+    json['verificationStatus'] as String,
+  ),
 );
 
 Map<String, dynamic> _$VenueSummaryToJson(VenueSummary instance) =>
@@ -19,4 +22,13 @@ Map<String, dynamic> _$VenueSummaryToJson(VenueSummary instance) =>
       'id': instance.id,
       'name': instance.name,
       'spaceCount': instance.spaceCount,
+      'verificationStatus':
+          _$VenueSummaryVerificationStatusEnumMap[instance.verificationStatus]!,
     };
+
+const _$VenueSummaryVerificationStatusEnumMap = {
+  VenueSummaryVerificationStatus.pending: 'PENDING',
+  VenueSummaryVerificationStatus.verified: 'VERIFIED',
+  VenueSummaryVerificationStatus.rejected: 'REJECTED',
+  VenueSummaryVerificationStatus.$unknown: r'$unknown',
+};

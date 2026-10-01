@@ -4,6 +4,8 @@
 
 import 'package:json_annotation/json_annotation.dart';
 
+import 'venue_summary_verification_status.dart';
+
 part 'venue_summary.g.dart';
 
 @JsonSerializable()
@@ -13,6 +15,7 @@ class VenueSummary {
     required this.id,
     required this.name,
     required this.spaceCount,
+    required this.verificationStatus,
   });
   
   factory VenueSummary.fromJson(Map<String, Object?> json) => _$VenueSummaryFromJson(json);
@@ -21,6 +24,7 @@ class VenueSummary {
   final String id;
   final String name;
   final int spaceCount;
+  final VenueSummaryVerificationStatus verificationStatus;
 
   Map<String, Object?> toJson() => _$VenueSummaryToJson(this);
 }

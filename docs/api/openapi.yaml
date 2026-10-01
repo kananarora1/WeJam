@@ -364,6 +364,22 @@ components:
           maxLength: 1000
           minLength: 0
           nullable: true
+        fssaiNumber:
+          type: string
+          description: FSSAI license number. Changing it resets verification to PENDING.
+          example: "12345678901234"
+          pattern: "\\d{14}"
+        hostingMode:
+          type: string
+          enum:
+          - OPEN
+          - SELF_ONLY
+        houseRules:
+          type: string
+          example: 18+ after 9 PM. Minimum spend ₹300 per person.
+          maxLength: 1000
+          minLength: 0
+          nullable: true
         latitude:
           type: number
           format: double
@@ -385,12 +401,26 @@ components:
           example: Amber Room
           maxLength: 80
           minLength: 0
+        soundCurfew:
+          type: string
+          description: Local time after which amplified sound must stop; null = no
+            curfew
+          example: 22:30
+          nullable: true
+        soundPolicy:
+          type: string
+          enum:
+          - ACOUSTIC_ONLY
+          - AMPLIFIED_ALLOWED
       required:
       - addressLine
       - city
+      - fssaiNumber
+      - hostingMode
       - latitude
       - longitude
       - name
+      - soundPolicy
     VenueResponse:
       type: object
       properties:
@@ -399,6 +429,16 @@ components:
         city:
           type: string
         description:
+          type: string
+          nullable: true
+        fssaiNumber:
+          type: string
+        hostingMode:
+          type: string
+          enum:
+          - OPEN
+          - SELF_ONLY
+        houseRules:
           type: string
           nullable: true
         id:
@@ -412,19 +452,44 @@ components:
           format: double
         name:
           type: string
+        rejectionReason:
+          type: string
+          nullable: true
+        soundCurfew:
+          type: string
+          example: 22:30
+          nullable: true
+        soundPolicy:
+          type: string
+          enum:
+          - ACOUSTIC_ONLY
+          - AMPLIFIED_ALLOWED
         spaces:
           type: array
           items:
             $ref: "#/components/schemas/SpaceResponse"
+        verificationStatus:
+          type: string
+          enum:
+          - PENDING
+          - VERIFIED
+          - REJECTED
       required:
       - addressLine
       - city
       - description
+      - fssaiNumber
+      - hostingMode
+      - houseRules
       - id
       - latitude
       - longitude
       - name
+      - rejectionReason
+      - soundCurfew
+      - soundPolicy
       - spaces
+      - verificationStatus
     VenueSummary:
       type: object
       properties:
@@ -438,11 +503,18 @@ components:
         spaceCount:
           type: integer
           format: int64
+        verificationStatus:
+          type: string
+          enum:
+          - PENDING
+          - VERIFIED
+          - REJECTED
       required:
       - city
       - id
       - name
       - spaceCount
+      - verificationStatus
   securitySchemes:
     bearerAuth:
       bearerFormat: JWT

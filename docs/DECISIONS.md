@@ -111,3 +111,8 @@ ADR-style log: context → decision → why.
 - **Context:** Step 3a modelled a per-space gear list (from wireframe 6.4). The updated product brief says target venues almost never provide instruments or sound gear: hosts bring the setup, performers bring their instruments.
 - **Decision:** Remove the gear list entirely (Flyway V4 `DROP TABLE space_gear`, API fields removed). Equipment is described per event by the host (`event.host_setup`, `event.amplified`) and per participant (`bringing_own_instrument`) in later steps.
 - **Why:** Avoids a flow that depends on venue-provided gear (explicitly out of scope). A forward migration rather than editing V3, because V3 is already applied in existing databases.
+
+## ADR-023: FSSAI uniqueness only among verified venues; a new number resets verification
+- **Context:** The FSSAI license identifies one food business premises and is the basis of venue verification (§5.12). A plain UNIQUE constraint lets anyone block a café by registering its number first.
+- **Decision:** Partial unique index `ON venues (fssai_number) WHERE verification_status = 'VERIFIED'`. Changing a venue's FSSAI number sets it back to PENDING and clears the rejection reason; other edits don't touch verification. Status is only changed by the platform admin (step 5).
+- **Why:** Squatting can't block the real owner — the admin resolves duplicates — yet the DB still guarantees one license is verified for at most one venue. Tying verification to the number prevents swapping in an unverified license after approval.
