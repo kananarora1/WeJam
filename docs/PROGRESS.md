@@ -106,3 +106,10 @@ Log of completed steps (what was built, key decisions). Newest at the bottom.
 - Flyway V6: adds `sound_policy` (CHECK), `sound_curfew`, `house_rules` to `spaces`, copies each venue's values into its spaces, drops them from `venues`. Copy verified by a rolled-back dry run on seeded V5 data. Hosting mode and `time_zone` stay on the venue.
 - API: moved from VenueRequest/Response to SpaceRequest/Response (`soundPolicy` required, curfew `HH:mm` optional, house rules optional). Spec + Dart client regenerated. CLAUDE.md §1/§5.7 wording updated.
 - Tests: 55 backend (space-level policy round trip incl. two spaces with different policies, missing/unknown policy → 400, DB CHECK on spaces), 37 mobile.
+
+## Step 4a — Host profiles (2026-10-02)
+- Flyway V7: `host_profiles` (one per user via UNIQUE owner; type INDIVIDUAL/GROUP; group kind BAND/FRIENDS/COMMUNITY + name; bio ≤200; area; Instagram handle CHECK) with CHECKs that a group always has kind + name and an individual never does; `host_profile_genres`; ordered `host_media_links` (http(s) CHECK).
+- `common.model.Genre`: fixed list shared with future event tags / feed filters.
+- New `host` module: `PUT /api/v1/me/host-profile` (HOST role, checked in the service; create-or-replace), `GET /api/v1/me/host-profile` (404 until created), `GET /api/v1/host-profiles/{id}` (any signed-in user). Individual display name = owner's display name (via auth's UserService); group fields ignored for individuals. Instagram stored without "@". Up to 5 genres and 5 links.
+- Spec + Dart client regenerated (`HostsClient`).
+- Tests: 64 backend (+9 host profile: role 403, group round trip with link order + sorted genres, individual name, group validation, replace/switch type, public read + 404, invalid fields, DB uniqueness + group CHECK), 37 mobile.

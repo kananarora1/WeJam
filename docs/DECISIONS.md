@@ -121,3 +121,8 @@ ADR-style log: context → decision → why.
 - **Context:** Step 3b stored them on the venue (CLAUDE.md §5.7 wording). The design (8.4 Space · edit) sets them per space: a rooftop may be acoustic-only for the neighbours while the main floor allows amplified sound.
 - **Decision:** Move them to `spaces` (Flyway V6, copying existing venue values to every space of that venue). Hosting mode stays venue-wide; the curfew is a local time interpreted in the venue's `time_zone`. Step 6 validates amplified events and end times against the event's space.
 - **Why:** Matches how venues actually work and the agreed design; cheap now (no events reference it yet), costly after step 6. Supersedes the sound-policy part of step 3b.
+
+## ADR-025: One host profile per user; fixed genre list; members are registered users invited by phone
+- **Context:** Step 4 (host profiles, design 4.1–4.4). The design shows group members invited "by phone or @username"; users have no usernames.
+- **Decision:** One `host_profiles` row per user (individual or group). Genres are a fixed enum in `common` (shared with events/feed later), max 5. Media links are URLs only, max 5. In 4b, group members are invited by the phone number of an already-registered user and must accept; no usernames, no invites to non-users.
+- **Why:** Keeps identity = phone OTP (§5.12) without inventing a username system; inviting non-users would need SMS (paid, ADR-012) or share links (out of scope). A fixed genre list makes feed filters and event tags match exactly. A second profile per user (solo + band) is a v2 concern.
