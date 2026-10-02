@@ -20,12 +20,15 @@ public record HostProfileResponse(
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED, nullable = true) String area,
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED, nullable = true) String instagramHandle,
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED) List<Genre> genres,
-        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) List<MediaLinkDto> mediaLinks) {
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) List<MediaLinkDto> mediaLinks,
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED,
+                description = "Owner first (admin), then accepted members. Pending invites are never listed here.")
+        List<HostMemberDto> members) {
 
-    public static HostProfileResponse from(HostProfile profile, String ownerDisplayName) {
+    public static HostProfileResponse from(HostProfile profile, String ownerDisplayName, List<HostMemberDto> members) {
         String displayName = profile.getType() == HostType.GROUP ? profile.getGroupName() : ownerDisplayName;
         return new HostProfileResponse(profile.getId(), profile.getType(), profile.getGroupKind(), displayName,
                 profile.getBio(), profile.getArea(), profile.getInstagramHandle(), profile.getGenres(),
-                profile.getMediaLinks().stream().map(l -> new MediaLinkDto(l.url(), l.title())).toList());
+                profile.getMediaLinks().stream().map(l -> new MediaLinkDto(l.url(), l.title())).toList(), members);
     }
 }

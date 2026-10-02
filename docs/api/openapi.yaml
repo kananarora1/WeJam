@@ -75,6 +75,65 @@ paths:
           description: OK
       tags:
       - Me
+  /api/v1/me/host-invites:
+    get:
+      operationId: myHostInvites
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/HostInviteResponse"
+          description: OK
+      tags:
+      - Hosts
+  /api/v1/me/host-invites/{hostProfileId}/accept:
+    post:
+      operationId: acceptHostInvite
+      parameters:
+      - in: path
+        name: hostProfileId
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "204":
+          description: No Content
+      tags:
+      - Hosts
+  /api/v1/me/host-invites/{hostProfileId}/decline:
+    post:
+      operationId: declineHostInvite
+      parameters:
+      - in: path
+        name: hostProfileId
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "204":
+          description: No Content
+      tags:
+      - Hosts
+  /api/v1/me/host-memberships/{hostProfileId}:
+    delete:
+      operationId: leaveHostGroup
+      parameters:
+      - in: path
+        name: hostProfileId
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "204":
+          description: No Content
+      tags:
+      - Hosts
   /api/v1/me/host-profile:
     get:
       operationId: getMyHostProfile
@@ -102,6 +161,52 @@ paths:
               schema:
                 $ref: "#/components/schemas/HostProfileResponse"
           description: OK
+      tags:
+      - Hosts
+  /api/v1/me/host-profile/invites:
+    get:
+      operationId: pendingInvites
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PendingInviteResponse"
+          description: OK
+      tags:
+      - Hosts
+    post:
+      operationId: inviteMember
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InviteMemberRequest"
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PendingInviteResponse"
+          description: Created
+      tags:
+      - Hosts
+  /api/v1/me/host-profile/members/{userId}:
+    delete:
+      operationId: removeMember
+      parameters:
+      - in: path
+        name: userId
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "204":
+          description: No Content
       tags:
       - Hosts
   /api/v1/me/roles:
@@ -301,6 +406,50 @@ components:
           - VENUE_ADMIN
       required:
       - role
+    HostInviteResponse:
+      type: object
+      properties:
+        groupKind:
+          type: string
+          enum:
+          - BAND
+          - FRIENDS
+          - COMMUNITY
+        groupName:
+          type: string
+        hostProfileId:
+          type: string
+          format: uuid
+        invitedAt:
+          type: string
+          format: date-time
+        invitedByName:
+          type: string
+          nullable: true
+      required:
+      - groupKind
+      - groupName
+      - hostProfileId
+      - invitedAt
+      - invitedByName
+    HostMemberDto:
+      type: object
+      description: "Owner first (admin), then accepted members. Pending invites are\
+        \ never listed here."
+      properties:
+        admin:
+          type: boolean
+          description: The profile owner
+        displayName:
+          type: string
+          nullable: true
+        userId:
+          type: string
+          format: uuid
+      required:
+      - admin
+      - displayName
+      - userId
     HostProfileRequest:
       type: object
       properties:
@@ -430,6 +579,12 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/MediaLinkDto"
+        members:
+          type: array
+          description: "Owner first (admin), then accepted members. Pending invites\
+            \ are never listed here."
+          items:
+            $ref: "#/components/schemas/HostMemberDto"
         type:
           type: string
           enum:
@@ -444,7 +599,18 @@ components:
       - id
       - instagramHandle
       - mediaLinks
+      - members
       - type
+    InviteMemberRequest:
+      type: object
+      properties:
+        phoneNumber:
+          type: string
+          example: "+911234567890"
+          minLength: 1
+          pattern: "\\+[1-9]\\d{7,14}"
+      required:
+      - phoneNumber
     MeResponse:
       type: object
       properties:
@@ -491,6 +657,22 @@ components:
       required:
       - title
       - url
+    PendingInviteResponse:
+      type: object
+      properties:
+        invitedAt:
+          type: string
+          format: date-time
+        maskedPhone:
+          type: string
+          example: +91 12•••••890
+        userId:
+          type: string
+          format: uuid
+      required:
+      - invitedAt
+      - maskedPhone
+      - userId
     SpaceRequest:
       type: object
       properties:

@@ -5,8 +5,11 @@
 import 'package:dio/dio.dart';
 import 'package:retrofit/retrofit.dart';
 
+import '../models/host_invite_response.dart';
 import '../models/host_profile_request.dart';
 import '../models/host_profile_response.dart';
+import '../models/invite_member_request.dart';
+import '../models/pending_invite_response.dart';
 
 part 'hosts_client.g.dart';
 
@@ -19,11 +22,42 @@ abstract class HostsClient {
     @Path('profileId') required String profileId,
   });
 
+  @GET('/api/v1/me/host-invites')
+  Future<List<HostInviteResponse>> myHostInvites();
+
+  @POST('/api/v1/me/host-invites/{hostProfileId}/accept')
+  Future<void> acceptHostInvite({
+    @Path('hostProfileId') required String hostProfileId,
+  });
+
+  @POST('/api/v1/me/host-invites/{hostProfileId}/decline')
+  Future<void> declineHostInvite({
+    @Path('hostProfileId') required String hostProfileId,
+  });
+
+  @DELETE('/api/v1/me/host-memberships/{hostProfileId}')
+  Future<void> leaveHostGroup({
+    @Path('hostProfileId') required String hostProfileId,
+  });
+
   @GET('/api/v1/me/host-profile')
   Future<HostProfileResponse> getMyHostProfile();
 
   @PUT('/api/v1/me/host-profile')
   Future<HostProfileResponse> saveMyHostProfile({
     @Body() required HostProfileRequest body,
+  });
+
+  @GET('/api/v1/me/host-profile/invites')
+  Future<List<PendingInviteResponse>> pendingInvites();
+
+  @POST('/api/v1/me/host-profile/invites')
+  Future<PendingInviteResponse> inviteMember({
+    @Body() required InviteMemberRequest body,
+  });
+
+  @DELETE('/api/v1/me/host-profile/members/{userId}')
+  Future<void> removeMember({
+    @Path('userId') required String userId,
   });
 }

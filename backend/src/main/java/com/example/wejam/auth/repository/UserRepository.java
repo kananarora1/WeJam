@@ -1,11 +1,14 @@
 package com.example.wejam.auth.repository;
 
+import com.example.wejam.auth.dto.UserSummary;
 import com.example.wejam.auth.model.User;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -49,4 +52,10 @@ public interface UserRepository extends JpaRepository<User, UUID> {
             ON CONFLICT DO NOTHING
             """, nativeQuery = true)
     int addRole(UUID userId, String role);
+
+    @Query("SELECT new com.example.wejam.auth.dto.UserSummary(u.id, u.displayName, u.phone) FROM User u WHERE u.phone = :phone")
+    Optional<UserSummary> findSummaryByPhone(String phone);
+
+    @Query("SELECT new com.example.wejam.auth.dto.UserSummary(u.id, u.displayName, u.phone) FROM User u WHERE u.id IN :ids")
+    List<UserSummary> findSummariesByIdIn(Collection<UUID> ids);
 }
