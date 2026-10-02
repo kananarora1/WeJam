@@ -4,6 +4,7 @@
 
 import 'package:json_annotation/json_annotation.dart';
 
+import 'host_member_dto.dart';
 import 'host_profile_response_genres.dart';
 import 'host_profile_response_group_kind.dart';
 import 'host_profile_response_type.dart';
@@ -22,6 +23,7 @@ class HostProfileResponse {
     required this.id,
     required this.instagramHandle,
     required this.mediaLinks,
+    required this.members,
     required this.type,
   });
   
@@ -37,6 +39,9 @@ class HostProfileResponse {
   final String id;
   final String? instagramHandle;
   final List<MediaLinkDto> mediaLinks;
+
+  /// Owner first (admin), then accepted members. Pending invites are never listed here.
+  final List<HostMemberDto> members;
   final HostProfileResponseType type;
 
   Map<String, Object?> toJson() => _$HostProfileResponseToJson(this);

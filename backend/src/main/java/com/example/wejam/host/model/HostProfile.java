@@ -51,6 +51,11 @@ public class HostProfile {
     @Column(name = "instagram_handle")
     private String instagramHandle;
 
+    /** Invited + accepted members (owner excluded). Read-only here: only the atomic counter queries write it,
+     *  so saving this entity can never overwrite a concurrent change with a stale value. */
+    @Column(name = "member_count", insertable = false, updatable = false)
+    private int memberCount;
+
     @ElementCollection
     @CollectionTable(name = "host_profile_genres", joinColumns = @JoinColumn(name = "host_profile_id"))
     @Enumerated(EnumType.STRING)
@@ -131,6 +136,10 @@ public class HostProfile {
 
     public String getInstagramHandle() {
         return instagramHandle;
+    }
+
+    public int getMemberCount() {
+        return memberCount;
     }
 
     /** In the enum's order, so responses are stable. */

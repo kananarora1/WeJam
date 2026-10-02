@@ -22,6 +22,9 @@ HostProfileResponse _$HostProfileResponseFromJson(Map<String, dynamic> json) =>
       mediaLinks: (json['mediaLinks'] as List<dynamic>)
           .map((e) => MediaLinkDto.fromJson(e as Map<String, dynamic>))
           .toList(),
+      members: (json['members'] as List<dynamic>)
+          .map((e) => HostMemberDto.fromJson(e as Map<String, dynamic>))
+          .toList(),
       type: HostProfileResponseType.fromJson(json['type'] as String),
     );
 
@@ -38,6 +41,7 @@ Map<String, dynamic> _$HostProfileResponseToJson(
   'id': instance.id,
   'instagramHandle': instance.instagramHandle,
   'mediaLinks': instance.mediaLinks,
+  'members': instance.members,
   'type': _$HostProfileResponseTypeEnumMap[instance.type]!,
 };
 

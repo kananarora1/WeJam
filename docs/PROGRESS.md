@@ -113,3 +113,12 @@ Log of completed steps (what was built, key decisions). Newest at the bottom.
 - New `host` module: `PUT /api/v1/me/host-profile` (HOST role, checked in the service; create-or-replace), `GET /api/v1/me/host-profile` (404 until created), `GET /api/v1/host-profiles/{id}` (any signed-in user). Individual display name = owner's display name (via auth's UserService); group fields ignored for individuals. Instagram stored without "@". Up to 5 genres and 5 links.
 - Spec + Dart client regenerated (`HostsClient`).
 - Tests: 64 backend (+9 host profile: role 403, group round trip with link order + sorted genres, individual name, group validation, replace/switch type, public read + 404, invalid fields, DB uniqueness + group CHECK), 37 mobile.
+
+## Step 4b — Host group members (2026-10-03)
+- Flyway V8: `host_group_members` (PK profile+user, status INVITED/ACCEPTED, accepted_at CHECK, index on user_id) and `host_profiles.member_count` (CHECK 0–9).
+- Cap of 10 people (owner + 9 invited/accepted) enforced atomically: `UPDATE … SET member_count = member_count + 1 WHERE member_count < 9`; insert-if-absent for the invite (`ON CONFLICT DO NOTHING`), and a failed insert rolls back the reserved slot. Accept is a conditional update (INVITED → ACCEPTED); decline/leave/remove/cancel delete the row and release the slot in the same transaction. `member_count` is mapped read-only on the entity so saving a profile can't overwrite it.
+- Endpoints (tag Hosts): owner — invite by phone (registered users only; 404 "ask them to sign up"), list pending invites (masked phone, no name), remove member / cancel invite; invitee — my invites (group name, kind, inviter), accept, decline; member — leave. Public profile lists owner (admin) + accepted members.
+- Group → individual switch blocked (409) while members or invites exist.
+- auth: `UserService.findByPhone` and bulk `summaries(ids)` (one query for member names).
+- Spec + Dart client regenerated.
+- Tests: 72 backend (+8 membership incl. 15 concurrent invites → exactly 9 accepted by the cap), 37 mobile.
