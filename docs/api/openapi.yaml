@@ -290,29 +290,63 @@ components:
           example: 60
           maximum: 1000
           minimum: 1
+        houseRules:
+          type: string
+          description: Shown on every event at this space
+          example: 18+ after 9 PM. Min. spend ₹300 for audience.
+          maxLength: 1000
+          minLength: 0
+          nullable: true
         name:
           type: string
           example: Main floor
           maxLength: 80
           minLength: 0
+        soundCurfew:
+          type: string
+          description: Local time (venue time zone) events here must end by; null
+            = no curfew
+          example: 23:00
+          nullable: true
+        soundPolicy:
+          type: string
+          enum:
+          - ACOUSTIC_ONLY
+          - AMPLIFIED_ALLOWED
       required:
       - capacity
       - name
+      - soundPolicy
     SpaceResponse:
       type: object
       properties:
         capacity:
           type: integer
           format: int32
+        houseRules:
+          type: string
+          nullable: true
         id:
           type: string
           format: uuid
         name:
           type: string
+        soundCurfew:
+          type: string
+          example: 23:00
+          nullable: true
+        soundPolicy:
+          type: string
+          enum:
+          - ACOUSTIC_ONLY
+          - AMPLIFIED_ALLOWED
       required:
       - capacity
+      - houseRules
       - id
       - name
+      - soundCurfew
+      - soundPolicy
     TokenRequest:
       type: object
       properties:
@@ -374,12 +408,6 @@ components:
           enum:
           - OPEN
           - SELF_ONLY
-        houseRules:
-          type: string
-          example: 18+ after 9 PM. Minimum spend ₹300 per person.
-          maxLength: 1000
-          minLength: 0
-          nullable: true
         latitude:
           type: number
           format: double
@@ -401,17 +429,6 @@ components:
           example: Amber Room
           maxLength: 80
           minLength: 0
-        soundCurfew:
-          type: string
-          description: Local time after which amplified sound must stop; null = no
-            curfew
-          example: 22:30
-          nullable: true
-        soundPolicy:
-          type: string
-          enum:
-          - ACOUSTIC_ONLY
-          - AMPLIFIED_ALLOWED
       required:
       - addressLine
       - city
@@ -420,7 +437,6 @@ components:
       - latitude
       - longitude
       - name
-      - soundPolicy
     VenueResponse:
       type: object
       properties:
@@ -438,9 +454,6 @@ components:
           enum:
           - OPEN
           - SELF_ONLY
-        houseRules:
-          type: string
-          nullable: true
         id:
           type: string
           format: uuid
@@ -455,15 +468,6 @@ components:
         rejectionReason:
           type: string
           nullable: true
-        soundCurfew:
-          type: string
-          example: 22:30
-          nullable: true
-        soundPolicy:
-          type: string
-          enum:
-          - ACOUSTIC_ONLY
-          - AMPLIFIED_ALLOWED
         spaces:
           type: array
           items:
@@ -480,14 +484,11 @@ components:
       - description
       - fssaiNumber
       - hostingMode
-      - houseRules
       - id
       - latitude
       - longitude
       - name
       - rejectionReason
-      - soundCurfew
-      - soundPolicy
       - spaces
       - verificationStatus
     VenueSummary:

@@ -5,7 +5,7 @@
 import 'package:json_annotation/json_annotation.dart';
 
 @JsonEnum()
-enum VenueResponseSoundPolicy {
+enum SpaceResponseSoundPolicy {
   @JsonValue('ACOUSTIC_ONLY')
   acousticOnly('ACOUSTIC_ONLY'),
   @JsonValue('AMPLIFIED_ALLOWED')
@@ -13,9 +13,9 @@ enum VenueResponseSoundPolicy {
   /// Default value for all unparsed values, allows backward compatibility when adding new values on the backend.
   $unknown(null);
 
-  const VenueResponseSoundPolicy(this.json);
+  const SpaceResponseSoundPolicy(this.json);
 
-  factory VenueResponseSoundPolicy.fromJson(String json) => values.firstWhere(
+  factory SpaceResponseSoundPolicy.fromJson(String json) => values.firstWhere(
         (e) => e.json == json,
         orElse: () => $unknown,
       );
@@ -25,5 +25,5 @@ enum VenueResponseSoundPolicy {
   @override
   String toString() => json?.toString() ?? super.toString();
   /// Returns all defined enum values excluding the $unknown value.
-  static List<VenueResponseSoundPolicy> get $valuesDefined => values.where((value) => value != $unknown).toList();
+  static List<SpaceResponseSoundPolicy> get $valuesDefined => values.where((value) => value != $unknown).toList();
 }

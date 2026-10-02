@@ -11,7 +11,7 @@ A mobile app for **live jam nights at cafés/restaurants** — mainly new or gro
 **Key reality: BYOI (bring your own instrument).** Target venues almost never provide instruments or sound gear. The **host** brings the setup (speaker/PA, mics, maybe a cajón); **performers bring their own instruments**. The venue provides space, timing, food & drinks, a sound policy, and approval. Never design a flow that depends on venue-provided gear.
 
 **Actors / roles**
-- **Venue admin** (`VENUE_ADMIN`) — gets the venue **verified** (FSSAI); lists spaces + availability slots; sets **hosting mode** (`OPEN` / `SELF_ONLY`), **sound policy** and house rules; approves/rejects host requests; can also **create events itself**; can report hosts; sees venue analytics.
+- **Venue admin** (`VENUE_ADMIN`) — gets the venue **verified** (FSSAI); lists spaces + availability slots; sets **hosting mode** (`OPEN` / `SELF_ONLY`) for the venue and **sound policy**, curfew and house rules per space; approves/rejects host requests; can also **create events itself**; can report hosts; sees venue analytics.
 - **Host** (`HOST`) — an **individual or a group** (band, friends' group, community); profile with Instagram + performance video links; optionally **verified** (college/company ID); requests a slot and creates an event in one of the 4 formats; declares their setup; sets questions for participants; manages participants.
 - **User** (`USER`) — discovers nearby events; joins as performer or audience depending on the format; answers host questions; rates/reports after the event.
 - **Platform admin** (`PLATFORM_ADMIN`) — reviews verification documents, handles reports, suspends/unsuspends accounts. Admin-only endpoints (+ Swagger, or a minimal admin section later).
@@ -31,7 +31,7 @@ A mobile app for **live jam nights at cafés/restaurants** — mainly new or gro
 
 ### In scope (v1)
 1. Auth with roles: `USER`, `HOST`, `VENUE_ADMIN`, `PLATFORM_ADMIN`
-2. Venue + space CRUD: location, FSSAI number, photos, capacity, availability slots, **hosting mode** (`OPEN` / `SELF_ONLY`), **sound policy** (`ACOUSTIC_ONLY` / `AMPLIFIED_ALLOWED`) + **sound curfew time**, **house rules** (free text: age limit, min spend, etc.)
+2. Venue + space CRUD — venue: location, FSSAI number, photos, **hosting mode** (`OPEN` / `SELF_ONLY`); space: capacity, availability slots, **sound policy** (`ACOUSTIC_ONLY` / `AMPLIFIED_ALLOWED`) + **sound curfew time** (venue's time zone), **house rules** (free text: age limit, min spend, etc.)
 3. Verification: venue (FSSAI + optional lease/owner agreement upload), host (optional college/company ID); reviewed by platform admin
 4. Host profiles: individual/group, members, Instagram, performance video links
 5. Events in the 4 formats; slot request → approve/reject (state machine); venue self-created events skip approval
@@ -129,7 +129,7 @@ Kafka, Kubernetes, Elasticsearch, microservices, GraphQL.
    - `CALL_FOR_MUSICIANS`: performer → `APPLIED` → host `APPROVED` / `REJECTED` (need-count consumed on approval); audience only if enabled
    - `OPEN_MIC`: performer → turn sign-up `CONFIRMED` with an ordered position; audience join as usual
    - Participation states: `APPLIED | CONFIRMED | REJECTED | CANCELLED | CHECKED_IN`
-7. **BYOI / gear:** no venue gear inventory. `event.host_setup` (free text) + `event.amplified` (bool); `participation.bringing_own_instrument` (bool). **Sound-policy validation:** an amplified event cannot be created/approved at an `ACOUSTIC_ONLY` venue, and event end time cannot exceed the venue's sound curfew.
+7. **BYOI / gear:** no venue gear inventory. `event.host_setup` (free text) + `event.amplified` (bool); `participation.bringing_own_instrument` (bool). **Sound-policy validation:** an amplified event cannot be created/approved in an `ACOUSTIC_ONLY` space, and event end time cannot exceed the space's sound curfew (local time in the venue's time zone).
 8. **Hosting mode:** `OPEN` (hosts can request) | `SELF_ONLY` (only the venue creates events). Enforced in the event service, with tests.
 9. **Notifications via transactional outbox:** outbox row written in the same transaction as the domain change; separate dispatcher sends to FCM with retries.
 10. **Live lineup:** Redis holds queue order; changes published via Redis pub/sub → STOMP to clients (works across multiple backend instances). `OPEN_MIC` turn order seeds the lineup.
