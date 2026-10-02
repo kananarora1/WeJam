@@ -116,3 +116,8 @@ ADR-style log: context → decision → why.
 - **Context:** The FSSAI license identifies one food business premises and is the basis of venue verification (§5.12). A plain UNIQUE constraint lets anyone block a café by registering its number first.
 - **Decision:** Partial unique index `ON venues (fssai_number) WHERE verification_status = 'VERIFIED'`. Changing a venue's FSSAI number sets it back to PENDING and clears the rejection reason; other edits don't touch verification. Status is only changed by the platform admin (step 5).
 - **Why:** Squatting can't block the real owner — the admin resolves duplicates — yet the DB still guarantees one license is verified for at most one venue. Tying verification to the number prevents swapping in an unverified license after approval.
+
+## ADR-024: Sound policy, curfew and house rules belong to a space
+- **Context:** Step 3b stored them on the venue (CLAUDE.md §5.7 wording). The design (8.4 Space · edit) sets them per space: a rooftop may be acoustic-only for the neighbours while the main floor allows amplified sound.
+- **Decision:** Move them to `spaces` (Flyway V6, copying existing venue values to every space of that venue). Hosting mode stays venue-wide; the curfew is a local time interpreted in the venue's `time_zone`. Step 6 validates amplified events and end times against the event's space.
+- **Why:** Matches how venues actually work and the agreed design; cheap now (no events reference it yet), costly after step 6. Supersedes the sound-policy part of step 3b.

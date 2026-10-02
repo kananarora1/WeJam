@@ -2,6 +2,8 @@ package com.example.wejam.venue.model;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -13,6 +15,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.Instant;
+import java.time.LocalTime;
 import java.util.UUID;
 
 @Entity
@@ -30,6 +33,17 @@ public class Space {
     private String name;
     private int capacity;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "sound_policy")
+    private SoundPolicy soundPolicy;
+
+    /** Local time of day in the venue's time zone; null = no curfew. */
+    @Column(name = "sound_curfew")
+    private LocalTime soundCurfew;
+
+    @Column(name = "house_rules")
+    private String houseRules;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private Instant createdAt;
@@ -45,9 +59,12 @@ public class Space {
         this.venue = venue;
     }
 
-    public void update(String name, int capacity) {
+    public void update(String name, int capacity, SoundPolicy soundPolicy, LocalTime soundCurfew, String houseRules) {
         this.name = name;
         this.capacity = capacity;
+        this.soundPolicy = soundPolicy;
+        this.soundCurfew = soundCurfew;
+        this.houseRules = houseRules;
     }
 
     public UUID getId() {
@@ -60,5 +77,17 @@ public class Space {
 
     public int getCapacity() {
         return capacity;
+    }
+
+    public SoundPolicy getSoundPolicy() {
+        return soundPolicy;
+    }
+
+    public LocalTime getSoundCurfew() {
+        return soundCurfew;
+    }
+
+    public String getHouseRules() {
+        return houseRules;
     }
 }

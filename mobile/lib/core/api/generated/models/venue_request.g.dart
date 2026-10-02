@@ -14,10 +14,7 @@ VenueRequest _$VenueRequestFromJson(Map<String, dynamic> json) => VenueRequest(
   latitude: (json['latitude'] as num).toDouble(),
   longitude: (json['longitude'] as num).toDouble(),
   name: json['name'] as String,
-  soundPolicy: VenueRequestSoundPolicy.fromJson(json['soundPolicy'] as String),
   description: json['description'] as String?,
-  houseRules: json['houseRules'] as String?,
-  soundCurfew: json['soundCurfew'] as String?,
 );
 
 Map<String, dynamic> _$VenueRequestToJson(VenueRequest instance) =>
@@ -27,22 +24,13 @@ Map<String, dynamic> _$VenueRequestToJson(VenueRequest instance) =>
       'description': instance.description,
       'fssaiNumber': instance.fssaiNumber,
       'hostingMode': _$VenueRequestHostingModeEnumMap[instance.hostingMode]!,
-      'houseRules': instance.houseRules,
       'latitude': instance.latitude,
       'longitude': instance.longitude,
       'name': instance.name,
-      'soundCurfew': instance.soundCurfew,
-      'soundPolicy': _$VenueRequestSoundPolicyEnumMap[instance.soundPolicy]!,
     };
 
 const _$VenueRequestHostingModeEnumMap = {
   VenueRequestHostingMode.open: 'OPEN',
   VenueRequestHostingMode.selfOnly: 'SELF_ONLY',
   VenueRequestHostingMode.$unknown: r'$unknown',
-};
-
-const _$VenueRequestSoundPolicyEnumMap = {
-  VenueRequestSoundPolicy.acousticOnly: 'ACOUSTIC_ONLY',
-  VenueRequestSoundPolicy.amplifiedAllowed: 'AMPLIFIED_ALLOWED',
-  VenueRequestSoundPolicy.$unknown: r'$unknown',
 };

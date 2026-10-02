@@ -99,13 +99,13 @@ public class VenueService {
     private static void apply(Venue venue, VenueRequest request) {
         venue.updateDetails(request.name().strip(), blankToNull(request.description()),
                 request.addressLine().strip(), request.city().strip(), request.latitude(), request.longitude());
-        venue.updatePolicies(request.hostingMode(), request.soundPolicy(), request.soundCurfew(),
-                blankToNull(request.houseRules()));
+        venue.changeHostingMode(request.hostingMode());
         venue.changeFssaiNumber(request.fssaiNumber());
     }
 
     private static void apply(Space space, SpaceRequest request) {
-        space.update(request.name().strip(), request.capacity());
+        space.update(request.name().strip(), request.capacity(), request.soundPolicy(), request.soundCurfew(),
+                blankToNull(request.houseRules()));
     }
 
     private static String blankToNull(String value) {

@@ -29,11 +29,11 @@ class VenueControllerTest {
     private static final String VENUE = """
             {"name":"  Amber Room ","description":"Cosy upstairs room","addressLine":"12th Main, HAL 2nd Stage",
              "city":"Bengaluru","latitude":12.9784,"longitude":77.6408,
-             "fssaiNumber":"12345678901234","hostingMode":"OPEN","soundPolicy":"ACOUSTIC_ONLY",
-             "soundCurfew":"22:30","houseRules":"18+ after 9 PM"}
+             "fssaiNumber":"12345678901234","hostingMode":"OPEN"}
             """;
     private static final String SPACE = """
-            {"name":"Main floor","capacity":60}
+            {"name":"Main floor","capacity":60,"soundPolicy":"AMPLIFIED_ALLOWED","soundCurfew":"23:00",
+             "houseRules":"18+ after 9 PM"}
             """;
 
     @Autowired
@@ -150,13 +150,16 @@ class VenueControllerTest {
         String spaceId = read(body(send(mvc.post().uri("/api/v1/venues/{id}/spaces", venueId), admin, SPACE)), "$.id");
 
         assertThat(send(mvc.put().uri("/api/v1/venues/{v}/spaces/{s}", venueId, spaceId), admin, """
-                {"name":"Rooftop","capacity":80}
+                {"name":"Rooftop","capacity":80,"soundPolicy":"ACOUSTIC_ONLY","soundCurfew":"22:00"}
                 """))
                 .hasStatusOk()
                 .bodyJson()
                 .satisfies(
                         json -> json.assertThat().extractingPath("$.name").isEqualTo("Rooftop"),
-                        json -> json.assertThat().extractingPath("$.capacity").isEqualTo(80));
+                        json -> json.assertThat().extractingPath("$.capacity").isEqualTo(80),
+                        json -> json.assertThat().extractingPath("$.soundPolicy").isEqualTo("ACOUSTIC_ONLY"),
+                        json -> json.assertThat().extractingPath("$.soundCurfew").isEqualTo("22:00"),
+                        json -> json.assertThat().extractingPath("$.houseRules").isNull());
     }
 
     @Test
@@ -191,7 +194,7 @@ class VenueControllerTest {
     }
 
     @Test
-    void newVenueStartsPendingWithItsPolicies() {
+    void newVenueStartsPendingWithItsHostingMode() {
         String venueId = createVenue(admin);
 
         assertThat(get("/api/v1/venues/" + venueId, admin))
@@ -200,22 +203,31 @@ class VenueControllerTest {
                 .satisfies(
                         json -> json.assertThat().extractingPath("$.fssaiNumber").isEqualTo(FSSAI),
                         json -> json.assertThat().extractingPath("$.hostingMode").isEqualTo("OPEN"),
-                        json -> json.assertThat().extractingPath("$.soundPolicy").isEqualTo("ACOUSTIC_ONLY"),
-                        json -> json.assertThat().extractingPath("$.soundCurfew").isEqualTo("22:30"),
-                        json -> json.assertThat().extractingPath("$.houseRules").isEqualTo("18+ after 9 PM"),
                         json -> json.assertThat().extractingPath("$.verificationStatus").isEqualTo("PENDING"),
                         json -> json.assertThat().extractingPath("$.rejectionReason").isNull());
     }
 
     @Test
-    void curfewAndHouseRulesAreOptional() {
-        MvcTestResult result = send(mvc.post().uri("/api/v1/venues"), admin,
-                VENUE.replace("\"soundCurfew\":\"22:30\",\"houseRules\":\"18+ after 9 PM\"",
-                        "\"soundCurfew\":null"));
+    void eachSpaceHasItsOwnSoundPolicyCurfewAndRules() {
+        String venueId = createVenue(admin);
+        send(mvc.post().uri("/api/v1/venues/{id}/spaces", venueId), admin, SPACE);
+        send(mvc.post().uri("/api/v1/venues/{id}/spaces", venueId), admin, """
+                {"name":"Rooftop","capacity":30,"soundPolicy":"ACOUSTIC_ONLY"}
+                """);
 
-        assertThat(result).hasStatus(201).bodyJson().satisfies(
-                json -> json.assertThat().extractingPath("$.soundCurfew").isNull(),
-                json -> json.assertThat().extractingPath("$.houseRules").isNull());
+        assertThat(get("/api/v1/venues/" + venueId, admin))
+                .hasStatusOk()
+                .bodyJson()
+                .satisfies(
+                        json -> json.assertThat().extractingPath("$.spaces[0].soundPolicy").isEqualTo("AMPLIFIED_ALLOWED"),
+                        json -> json.assertThat().extractingPath("$.spaces[0].soundCurfew").isEqualTo("23:00"),
+                        json -> json.assertThat().extractingPath("$.spaces[0].houseRules").isEqualTo("18+ after 9 PM"),
+                        // Curfew and house rules are optional.
+                        json -> json.assertThat().extractingPath("$.spaces[1].soundPolicy").isEqualTo("ACOUSTIC_ONLY"),
+                        json -> json.assertThat().extractingPath("$.spaces[1].soundCurfew").isNull(),
+                        json -> json.assertThat().extractingPath("$.spaces[1].houseRules").isNull(),
+                        // Nothing sound-related is left on the venue itself.
+                        json -> json.assertThat().doesNotHavePath("$.soundPolicy"));
     }
 
     @Test
@@ -228,11 +240,16 @@ class VenueControllerTest {
     }
 
     @Test
-    void unknownPolicyValuesAreRejected() {
+    void unknownOrMissingPolicyValuesAreRejected() {
+        String venueId = createVenue(admin);
+
+        assertThat(send(mvc.post().uri("/api/v1/venues/{id}/spaces", venueId), admin,
+                SPACE.replace("\"AMPLIFIED_ALLOWED\"", "\"LOUD\""))).hasStatus(400);
+        assertThat(send(mvc.post().uri("/api/v1/venues/{id}/spaces", venueId), admin, """
+                {"name":"Rooftop","capacity":30}
+                """)).hasStatus(400).bodyJson().extractingPath("$.errors.soundPolicy").isNotNull();
         assertThat(send(mvc.post().uri("/api/v1/venues"), admin,
-                VENUE.replace("\"ACOUSTIC_ONLY\"", "\"LOUD\""))).hasStatus(400);
-        assertThat(send(mvc.post().uri("/api/v1/venues"), admin,
-                VENUE.replace("\"hostingMode\":\"OPEN\",", ""))).hasStatus(400);
+                VENUE.replace(",\"hostingMode\":\"OPEN\"", ""))).hasStatus(400);
     }
 
     @Test
@@ -281,9 +298,10 @@ class VenueControllerTest {
     @Test
     void databaseRejectsUnknownPolicyValuesEvenWithoutTheApi() {
         String venueId = createVenue(admin);
+        String spaceId = read(body(send(mvc.post().uri("/api/v1/venues/{id}/spaces", venueId), admin, SPACE)), "$.id");
 
-        assertThatThrownBy(() -> jdbc.update("UPDATE venues SET sound_policy = 'LOUD' WHERE id = ?",
-                UUID.fromString(venueId))).isInstanceOf(DataIntegrityViolationException.class);
+        assertThatThrownBy(() -> jdbc.update("UPDATE spaces SET sound_policy = 'LOUD' WHERE id = ?",
+                UUID.fromString(spaceId))).isInstanceOf(DataIntegrityViolationException.class);
         assertThatThrownBy(() -> jdbc.update("UPDATE venues SET verification_status = 'MAYBE' WHERE id = ?",
                 UUID.fromString(venueId))).isInstanceOf(DataIntegrityViolationException.class);
     }

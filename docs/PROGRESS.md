@@ -100,3 +100,9 @@ Log of completed steps (what was built, key decisions). Newest at the bottom.
 - Fix to step 2c: `OpenApiSpecTest` now decodes the YAML as UTF-8 (MockMvc defaulted to ISO-8859-1 and corrupted `₹`, which broke Dart generation).
 - Spec + Dart client regenerated (venue models + per-model enum types).
 - Tests: 55 backend (+9 venue: defaults, optional curfew/rules, FSSAI format, unknown enums, status not settable, verification reset rule, partial uniqueness, DB CHECKs, summary status), 37 mobile.
+
+## Change — Sound policy, curfew & house rules per space (2026-10-02)
+- Design 8.4 puts them on the space ("Acoustic-only spaces can't host amplified events"); 3b had them on the venue. Moved before any event depends on them.
+- Flyway V6: adds `sound_policy` (CHECK), `sound_curfew`, `house_rules` to `spaces`, copies each venue's values into its spaces, drops them from `venues`. Copy verified by a rolled-back dry run on seeded V5 data. Hosting mode and `time_zone` stay on the venue.
+- API: moved from VenueRequest/Response to SpaceRequest/Response (`soundPolicy` required, curfew `HH:mm` optional, house rules optional). Spec + Dart client regenerated. CLAUDE.md §1/§5.7 wording updated.
+- Tests: 55 backend (space-level policy round trip incl. two spaces with different policies, missing/unknown policy → 400, DB CHECK on spaces), 37 mobile.
