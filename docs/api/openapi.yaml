@@ -27,6 +27,25 @@ paths:
       security: []
       tags:
       - Auth
+  /api/v1/host-profiles/{profileId}:
+    get:
+      operationId: getHostProfile
+      parameters:
+      - in: path
+        name: profileId
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HostProfileResponse"
+          description: OK
+      tags:
+      - Hosts
   /api/v1/me:
     get:
       operationId: me
@@ -56,6 +75,35 @@ paths:
           description: OK
       tags:
       - Me
+  /api/v1/me/host-profile:
+    get:
+      operationId: getMyHostProfile
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HostProfileResponse"
+          description: OK
+      tags:
+      - Hosts
+    put:
+      operationId: saveMyHostProfile
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HostProfileRequest"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HostProfileResponse"
+          description: OK
+      tags:
+      - Hosts
   /api/v1/me/roles:
     post:
       operationId: addRole
@@ -253,6 +301,150 @@ components:
           - VENUE_ADMIN
       required:
       - role
+    HostProfileRequest:
+      type: object
+      properties:
+        area:
+          type: string
+          example: Indiranagar
+          maxLength: 80
+          minLength: 0
+          nullable: true
+        bio:
+          type: string
+          example: Four friends running slow blues nights in Indiranagar since 2024.
+          maxLength: 200
+          minLength: 0
+          nullable: true
+        genres:
+          type: array
+          items:
+            type: string
+            enum:
+            - BLUES
+            - JAZZ
+            - ROCK
+            - INDIE
+            - POP
+            - FOLK
+            - SOUL
+            - FUNK
+            - SUFI
+            - BOLLYWOOD
+            - INDIAN_CLASSICAL
+            - WESTERN_CLASSICAL
+            - FUSION
+            - HIP_HOP
+            - ELECTRONIC
+            - METAL
+            - ACOUSTIC_COVERS
+          maxItems: 5
+          minItems: 0
+          uniqueItems: true
+        groupKind:
+          type: string
+          description: Required when type is GROUP
+          enum:
+          - BAND
+          - FRIENDS
+          - COMMUNITY
+          nullable: true
+        groupName:
+          type: string
+          description: Required when type is GROUP
+          example: The Low Notes
+          maxLength: 80
+          minLength: 0
+          nullable: true
+        instagramHandle:
+          type: string
+          description: "Instagram username, with or without @"
+          example: thelownotes
+          nullable: true
+          pattern: "@?[A-Za-z0-9._]{1,30}"
+        mediaLinks:
+          type: array
+          items:
+            $ref: "#/components/schemas/MediaLinkDto"
+          maxItems: 5
+          minItems: 0
+        type:
+          type: string
+          enum:
+          - INDIVIDUAL
+          - GROUP
+      required:
+      - genres
+      - mediaLinks
+      - type
+    HostProfileResponse:
+      type: object
+      properties:
+        area:
+          type: string
+          nullable: true
+        bio:
+          type: string
+          nullable: true
+        displayName:
+          type: string
+          description: "Group name, or the owner's display name for an individual\
+            \ (null if not set yet)"
+          nullable: true
+        genres:
+          type: array
+          items:
+            type: string
+            enum:
+            - BLUES
+            - JAZZ
+            - ROCK
+            - INDIE
+            - POP
+            - FOLK
+            - SOUL
+            - FUNK
+            - SUFI
+            - BOLLYWOOD
+            - INDIAN_CLASSICAL
+            - WESTERN_CLASSICAL
+            - FUSION
+            - HIP_HOP
+            - ELECTRONIC
+            - METAL
+            - ACOUSTIC_COVERS
+        groupKind:
+          type: string
+          enum:
+          - BAND
+          - FRIENDS
+          - COMMUNITY
+          nullable: true
+        id:
+          type: string
+          format: uuid
+        instagramHandle:
+          type: string
+          nullable: true
+        mediaLinks:
+          type: array
+          items:
+            $ref: "#/components/schemas/MediaLinkDto"
+        type:
+          type: string
+          enum:
+          - INDIVIDUAL
+          - GROUP
+      required:
+      - area
+      - bio
+      - displayName
+      - genres
+      - groupKind
+      - id
+      - instagramHandle
+      - mediaLinks
+      - type
     MeResponse:
       type: object
       properties:
@@ -281,6 +473,24 @@ components:
       - id
       - phone
       - roles
+    MediaLinkDto:
+      type: object
+      properties:
+        title:
+          type: string
+          example: Live at Amber Room
+          maxLength: 80
+          minLength: 0
+          nullable: true
+        url:
+          type: string
+          example: https://youtu.be/abc123
+          maxLength: 300
+          minLength: 0
+          pattern: https?://\S+
+      required:
+      - title
+      - url
     SpaceRequest:
       type: object
       properties:
