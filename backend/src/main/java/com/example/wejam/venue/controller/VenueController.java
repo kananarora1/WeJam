@@ -60,6 +60,12 @@ class VenueController {
         venueService.delete(CurrentUser.id(jwt), venueId);
     }
 
+    /** Owner: send a venue that was not verified back for review. */
+    @PostMapping("/venues/{venueId}/resubmit")
+    VenueResponse resubmitVenue(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID venueId) {
+        return venueService.resubmit(CurrentUser.id(jwt), venueId);
+    }
+
     @GetMapping("/me/venues")
     List<VenueSummary> myVenues(@AuthenticationPrincipal Jwt jwt) {
         return venueService.myVenues(CurrentUser.id(jwt));

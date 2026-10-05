@@ -122,3 +122,14 @@ Log of completed steps (what was built, key decisions). Newest at the bottom.
 - auth: `UserService.findByPhone` and bulk `summaries(ids)` (one query for member names).
 - Spec + Dart client regenerated.
 - Tests: 72 backend (+8 membership incl. 15 concurrent invites → exactly 9 accepted by the cap), 37 mobile.
+
+## Step 5a — Platform admin + venue verification (2026-10-05)
+- Flyway V9: `PLATFORM_ADMIN` in the role CHECK; `venues.verification_requested_at` + queue index; `admin_actions` (append-only log, keyset index).
+- `PLATFORM_ADMIN` only from the `WEJAM_ADMIN_PHONES` allow-list, synced at every login (granted if listed, revoked if not). `Role.isSelfAssignable` is now an explicit allow-list (HOST, VENUE_ADMIN) — the old `!= USER` would have made the new role self-assignable.
+- New `verification` module (queue, review, approve, reject with reason) and `admin` module (action log, `GET /admin/actions` keyset-paginated). Status writes stay in `VenueService` as conditional updates (`… WHERE verification_status = 'PENDING'`); approving a second venue with an already-verified FSSAI → 409 (partial unique index caught). Owner `POST /venues/{id}/resubmit` (REJECTED → PENDING). Automated checks: offline FSSAI structure heuristic + count of other venues with the same number.
+- Admin role checked in services (§6) and by a `/api/v1/admin/**` rule in SecurityConfig. Log writes use `Propagation.MANDATORY` so a decision and its log entry commit together.
+- `Venue` is `@DynamicUpdate` so an owner's edit never rewrites a verification decision with a stale value.
+- Spec + Dart client regenerated (`AdminClient`). The new `PLATFORM_ADMIN` enum value broke the app's exhaustive role switch at compile time (caught by the regeneration); app `Role` gains `platformAdmin` + profile chip label.
+- Tests: 84 backend (+8 verification incl. concurrent approve/reject, +2 allow-list grant/revoke, +1 PLATFORM_ADMIN not self-assignable, +1 phone re-link), 37 mobile.
+- Fix (bug from 2a): a Firebase account recreated with the same phone gets a new uid, so the exchange hit `users.phone` UNIQUE → 500 on every login. Login now re-links the existing user to the new uid when the OTP-verified phone matches (`relinkPhoneToFirebaseUid`); regression test added.
+- Dev setup: `backend/.env` (gitignored) + committed `backend/.env.example`, loaded via `spring.config.import=optional:file:./.env[.properties]` — no more `export` lines; real env vars still override. New `wejam.firebase.credentials-file` (from `GOOGLE_APPLICATION_CREDENTIALS`) because the Google SDK only reads that variable from the OS environment. Verified booting with an empty environment in real Firebase mode.

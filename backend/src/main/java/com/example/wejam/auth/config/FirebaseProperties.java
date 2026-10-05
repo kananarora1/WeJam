@@ -6,5 +6,8 @@ import org.springframework.validation.annotation.Validated;
 
 @Validated
 @ConfigurationProperties("wejam.firebase")
-public record FirebaseProperties(@NotBlank String projectId) {
+public record FirebaseProperties(
+        @NotBlank String projectId,
+        /** Service-account JSON path. Blank = Google's standard lookup (GOOGLE_APPLICATION_CREDENTIALS env var). */
+        String credentialsFile) {
 }

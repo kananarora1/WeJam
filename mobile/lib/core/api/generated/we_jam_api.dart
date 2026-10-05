@@ -4,6 +4,7 @@
 
 import 'package:dio/dio.dart';
 
+import 'clients/admin_client.dart';
 import 'clients/auth_client.dart';
 import 'clients/hosts_client.dart';
 import 'clients/me_client.dart';
@@ -22,10 +23,13 @@ class WeJamApi {
 
   static String get version => 'v1';
 
+  AdminClient? _admin;
   AuthClient? _auth;
   HostsClient? _hosts;
   MeClient? _me;
   VenuesClient? _venues;
+
+  AdminClient get admin => _admin ??= AdminClient(_dio, baseUrl: _baseUrl);
 
   AuthClient get auth => _auth ??= AuthClient(_dio, baseUrl: _baseUrl);
 

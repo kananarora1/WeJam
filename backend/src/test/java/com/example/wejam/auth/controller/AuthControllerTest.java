@@ -20,6 +20,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.ThreadLocalRandom;
 
 import static com.example.wejam.TestAuth.body;
 import static com.example.wejam.TestAuth.exchange;
@@ -120,4 +121,43 @@ class AuthControllerTest {
     private int countUsers(String uid) {
         return jdbc.queryForObject("SELECT count(*) FROM users WHERE firebase_uid = ?", Integer.class, uid);
     }
+
+    @Test
+    void allowListedPhoneGetsPlatformAdminAtLogin() {
+        // Same identity as the verification tests: users.phone is unique.
+        MvcTestResult result = exchange(mvc, "fake:platform-admin:+919999999901");
+
+        assertThat(jwtDecoder.decode(read(body(result), "$.accessToken")).getClaimAsStringList("roles"))
+                .contains("PLATFORM_ADMIN");
+    }
+
+    @Test
+    void platformAdminIsRevokedAtLoginWhenNoLongerListed() {
+        String uid = randomUid();
+        exchange(mvc, "fake:" + uid + ":+919000011111");
+        jdbc.update("INSERT INTO user_roles (user_id, role) SELECT id, 'PLATFORM_ADMIN' FROM users WHERE firebase_uid = ?", uid);
+
+        MvcTestResult again = exchange(mvc, "fake:" + uid);
+
+        assertThat(jwtDecoder.decode(read(body(again), "$.accessToken")).getClaimAsStringList("roles"))
+                .doesNotContain("PLATFORM_ADMIN");
+    }
+
+    @Test
+    void recreatedFirebaseAccountWithSamePhoneKeepsTheExistingUser() {
+        String phone = "+91" + (7_000_000_000L + ThreadLocalRandom.current().nextLong(999_999_999L));
+        String oldUid = randomUid();
+        String firstSubject = subjectOf(exchange(mvc, "fake:" + oldUid + ":" + phone));
+
+        // Same phone, new Firebase uid (account deleted and recreated in Firebase).
+        String newUid = randomUid();
+        MvcTestResult again = exchange(mvc, "fake:" + newUid + ":" + phone);
+
+        assertThat(again).hasStatusOk();
+        assertThat(subjectOf(again)).isEqualTo(firstSubject);
+        assertThat(jdbc.queryForObject("SELECT firebase_uid FROM users WHERE phone = ?", String.class, phone))
+                .isEqualTo(newUid);
+        assertThat(jdbc.queryForObject("SELECT count(*) FROM users WHERE phone = ?", Integer.class, phone)).isEqualTo(1);
+    }
 }
+

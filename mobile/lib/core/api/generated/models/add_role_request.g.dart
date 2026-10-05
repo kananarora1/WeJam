@@ -16,5 +16,6 @@ const _$AddRoleRequestRoleEnumMap = {
   AddRoleRequestRole.user: 'USER',
   AddRoleRequestRole.host: 'HOST',
   AddRoleRequestRole.venueAdmin: 'VENUE_ADMIN',
+  AddRoleRequestRole.platformAdmin: 'PLATFORM_ADMIN',
   AddRoleRequestRole.$unknown: r'$unknown',
 };

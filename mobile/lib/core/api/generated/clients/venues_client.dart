@@ -41,6 +41,11 @@ abstract class VenuesClient {
     @Body() required VenueRequest body,
   });
 
+  @POST('/api/v1/venues/{venueId}/resubmit')
+  Future<VenueResponse> resubmitVenue({
+    @Path('venueId') required String venueId,
+  });
+
   @POST('/api/v1/venues/{venueId}/spaces')
   Future<SpaceResponse> createSpace({
     @Path('venueId') required String venueId,

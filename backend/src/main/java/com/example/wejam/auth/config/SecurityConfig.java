@@ -27,7 +27,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 
 @Configuration
 @EnableMethodSecurity
-@EnableConfigurationProperties(JwtProperties.class)
+@EnableConfigurationProperties({JwtProperties.class, PlatformAdminProperties.class})
 class SecurityConfig {
 
     @Bean
@@ -42,6 +42,8 @@ class SecurityConfig {
                                 "/swagger-ui/**", "/swagger-ui.html").permitAll()
                         // Let error responses through; otherwise a 400/500 on a public endpoint becomes 401.
                         .requestMatchers("/error").permitAll()
+                        // Defence in depth: admin services also check the role themselves.
+                        .requestMatchers("/api/v1/admin/**").hasRole("PLATFORM_ADMIN")
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(oauth2 -> oauth2
                         .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter())))

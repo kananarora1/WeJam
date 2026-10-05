@@ -27,5 +27,6 @@ const _$MeResponseRolesEnumMap = {
   MeResponseRoles.user: 'USER',
   MeResponseRoles.host: 'HOST',
   MeResponseRoles.venueAdmin: 'VENUE_ADMIN',
+  MeResponseRoles.platformAdmin: 'PLATFORM_ADMIN',
   MeResponseRoles.$unknown: r'$unknown',
 };

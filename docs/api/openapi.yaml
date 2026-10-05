@@ -8,6 +8,119 @@ servers:
 security:
 - bearerAuth: []
 paths:
+  /api/v1/admin/actions:
+    get:
+      operationId: adminActions
+      parameters:
+      - in: query
+        name: before
+        required: false
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: beforeId
+        required: false
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminActionPage"
+          description: OK
+      tags:
+      - Admin
+  /api/v1/admin/venue-verifications:
+    get:
+      operationId: venueVerificationQueue
+      parameters:
+      - in: query
+        name: status
+        required: false
+        schema:
+          type: string
+          default: PENDING
+          enum:
+          - PENDING
+          - VERIFIED
+          - REJECTED
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/VenueVerificationItem"
+          description: OK
+      tags:
+      - Admin
+  /api/v1/admin/venues/{venueId}:
+    get:
+      operationId: reviewVenue
+      parameters:
+      - in: path
+        name: venueId
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VenueReviewResponse"
+          description: OK
+      tags:
+      - Admin
+  /api/v1/admin/venues/{venueId}/approve:
+    post:
+      operationId: approveVenue
+      parameters:
+      - in: path
+        name: venueId
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VenueResponse"
+          description: OK
+      tags:
+      - Admin
+  /api/v1/admin/venues/{venueId}/reject:
+    post:
+      operationId: rejectVenue
+      parameters:
+      - in: path
+        name: venueId
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RejectVerificationRequest"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VenueResponse"
+          description: OK
+      tags:
+      - Admin
   /api/v1/auth/token:
     post:
       operationId: exchange
@@ -316,6 +429,25 @@ paths:
           description: OK
       tags:
       - Venues
+  /api/v1/venues/{venueId}/resubmit:
+    post:
+      operationId: resubmitVenue
+      parameters:
+      - in: path
+        name: venueId
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VenueResponse"
+          description: OK
+      tags:
+      - Venues
   /api/v1/venues/{venueId}/spaces:
     post:
       operationId: createSpace
@@ -404,8 +536,67 @@ components:
           - USER
           - HOST
           - VENUE_ADMIN
+          - PLATFORM_ADMIN
       required:
       - role
+    AdminActionPage:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/AdminActionResponse"
+        nextBefore:
+          type: string
+          format: date-time
+          nullable: true
+        nextBeforeId:
+          type: string
+          format: uuid
+          nullable: true
+      required:
+      - items
+      - nextBefore
+      - nextBeforeId
+    AdminActionResponse:
+      type: object
+      properties:
+        action:
+          type: string
+          enum:
+          - VENUE_APPROVED
+          - VENUE_REJECTED
+        adminId:
+          type: string
+          format: uuid
+        adminName:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        id:
+          type: string
+          format: uuid
+        reason:
+          type: string
+          nullable: true
+        targetId:
+          type: string
+          format: uuid
+        targetType:
+          type: string
+          enum:
+          - VENUE
+      required:
+      - action
+      - adminId
+      - adminName
+      - createdAt
+      - id
+      - reason
+      - targetId
+      - targetType
     HostInviteResponse:
       type: object
       properties:
@@ -633,6 +824,7 @@ components:
             - USER
             - HOST
             - VENUE_ADMIN
+            - PLATFORM_ADMIN
           uniqueItems: true
       required:
       - displayName
@@ -673,6 +865,18 @@ components:
       - invitedAt
       - maskedPhone
       - userId
+    RejectVerificationRequest:
+      type: object
+      properties:
+        reason:
+          type: string
+          description: Sent verbatim to the venue
+          example: The FSSAI number doesn't match the registry. Please check the 14
+            digits on your license.
+          maxLength: 500
+          minLength: 0
+      required:
+      - reason
     SpaceRequest:
       type: object
       properties:
@@ -883,6 +1087,24 @@ components:
       - rejectionReason
       - spaces
       - verificationStatus
+    VenueReviewResponse:
+      type: object
+      properties:
+        checks:
+          $ref: "#/components/schemas/VerificationChecks"
+        ownerName:
+          type: string
+          nullable: true
+        ownerPhone:
+          type: string
+          nullable: true
+        venue:
+          $ref: "#/components/schemas/VenueResponse"
+      required:
+      - checks
+      - ownerName
+      - ownerPhone
+      - venue
     VenueSummary:
       type: object
       properties:
@@ -908,6 +1130,55 @@ components:
       - name
       - spaceCount
       - verificationStatus
+    VenueVerificationItem:
+      type: object
+      properties:
+        checks:
+          $ref: "#/components/schemas/VerificationChecks"
+        city:
+          type: string
+        fssaiNumber:
+          type: string
+        name:
+          type: string
+        ownerName:
+          type: string
+          nullable: true
+        requestedAt:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum:
+          - PENDING
+          - VERIFIED
+          - REJECTED
+        venueId:
+          type: string
+          format: uuid
+      required:
+      - checks
+      - city
+      - fssaiNumber
+      - name
+      - ownerName
+      - requestedAt
+      - status
+      - venueId
+    VerificationChecks:
+      type: object
+      properties:
+        fssaiStructureLooksValid:
+          type: boolean
+          description: "14 digits, licence type 1/2, state code 01–38 (offline heuristic,\
+            \ not the registry)"
+        otherVenuesWithSameFssai:
+          type: integer
+          format: int64
+          description: Other venues using the same FSSAI number
+      required:
+      - fssaiStructureLooksValid
+      - otherVenuesWithSameFssai
   securitySchemes:
     bearerAuth:
       bearerFormat: JWT

@@ -9,6 +9,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.DynamicUpdate;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.Instant;
@@ -20,6 +21,9 @@ import java.util.UUID;
  */
 @Entity
 @Table(name = "venues")
+// UPDATE only the columns that changed: an owner editing their address must never write back a stale
+// verification_status over a decision the platform admin just made (those are separate conditional updates).
+@DynamicUpdate
 public class Venue {
 
     @Id
@@ -52,6 +56,9 @@ public class Venue {
 
     @Column(name = "rejection_reason")
     private String rejectionReason;
+
+    @Column(name = "verification_requested_at")
+    private Instant verificationRequestedAt;
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
@@ -90,6 +97,7 @@ public class Venue {
         this.fssaiNumber = fssaiNumber;
         this.verificationStatus = VerificationStatus.PENDING;
         this.rejectionReason = null;
+        this.verificationRequestedAt = Instant.now();
     }
 
     public UUID getId() {

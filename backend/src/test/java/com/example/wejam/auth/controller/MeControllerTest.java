@@ -124,6 +124,13 @@ class MeControllerTest {
     }
 
     @Test
+    void platformAdminCanNeverBeSelfAssigned() {
+        String token = accessTokenFor(mvc, randomUid());
+
+        assertThat(addRole(token, "PLATFORM_ADMIN")).hasStatus(400);
+    }
+
+    @Test
     void addingUnknownRoleReturns400() {
         String token = accessTokenFor(mvc, randomUid());
 

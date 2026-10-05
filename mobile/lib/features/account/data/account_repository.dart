@@ -53,6 +53,7 @@ class AccountRepository {
           MeResponseRoles.user => Role.user,
           MeResponseRoles.host => Role.host,
           MeResponseRoles.venueAdmin => Role.venueAdmin,
+          MeResponseRoles.platformAdmin => Role.platformAdmin,
           // A role added on the backend after this app version shipped.
           MeResponseRoles.$unknown => null,
         },

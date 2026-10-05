@@ -3,10 +3,12 @@ package com.example.wejam.auth.model;
 public enum Role {
     USER,
     HOST,
-    VENUE_ADMIN;
+    VENUE_ADMIN,
+    /** Only ever granted from the configured allow-list at login (PlatformAdminProperties). */
+    PLATFORM_ADMIN;
 
-    /** USER is granted to everyone at first login; only the others can be requested. */
+    /** An explicit allow-list, so a new role is never self-assignable by accident. */
     public boolean isSelfAssignable() {
-        return this != USER;
+        return this == HOST || this == VENUE_ADMIN;
     }
 }

@@ -93,6 +93,7 @@ class _RoleChip extends StatelessWidget {
       Role.user => 'Musician / listener',
       Role.host => 'Host',
       Role.venueAdmin => 'Venue admin',
+      Role.platformAdmin => 'Platform admin',
     };
     return Container(
       height: 30,

@@ -12,6 +12,8 @@ enum MeResponseRoles {
   host('HOST'),
   @JsonValue('VENUE_ADMIN')
   venueAdmin('VENUE_ADMIN'),
+  @JsonValue('PLATFORM_ADMIN')
+  platformAdmin('PLATFORM_ADMIN'),
   /// Default value for all unparsed values, allows backward compatibility when adding new values on the backend.
   $unknown(null);
 

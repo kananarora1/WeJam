@@ -5,12 +5,17 @@ import com.example.wejam.venue.dto.SpaceResponse;
 import com.example.wejam.venue.dto.VenueRequest;
 import com.example.wejam.venue.dto.VenueResponse;
 import com.example.wejam.venue.dto.VenueSummary;
+import com.example.wejam.venue.dto.VenueVerificationRow;
+import com.example.wejam.venue.exception.VerificationStateException;
 import com.example.wejam.venue.exception.SpaceNotFoundException;
 import com.example.wejam.venue.exception.VenueNotFoundException;
 import com.example.wejam.venue.model.Space;
 import com.example.wejam.venue.model.Venue;
 import com.example.wejam.venue.repository.SpaceRepository;
 import com.example.wejam.venue.repository.VenueRepository;
+import com.example.wejam.venue.model.VerificationStatus;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Limit;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -61,6 +66,66 @@ public class VenueService {
     @Transactional(readOnly = true)
     public List<VenueSummary> myVenues(UUID ownerId) {
         return venueRepository.findSummariesByOwnerId(ownerId);
+    }
+
+    /** Owner: after fixing what the admin asked for, send a REJECTED venue back to the queue. */
+    public VenueResponse resubmit(UUID ownerId, UUID venueId) {
+        Venue venue = ownedVenue(ownerId, venueId);
+        if (venueRepository.resubmitRejected(venue.getId(), ownerId) == 0) {
+            throw VerificationStateException.notRejected();
+        }
+        return get(venueId);
+    }
+
+    // --- Verification decisions, driven by the verification module. Role-checked here too, so no future
+    //     caller can skip the check.
+
+    @PreAuthorize("hasRole('PLATFORM_ADMIN')")
+    @Transactional(readOnly = true)
+    public List<VenueVerificationRow> verificationQueue(VerificationStatus status, int limit) {
+        return venueRepository.findVerificationQueue(status, Limit.of(limit));
+    }
+
+    @PreAuthorize("hasRole('PLATFORM_ADMIN')")
+    @Transactional(readOnly = true)
+    public long countOtherVenuesWithFssai(UUID venueId, String fssaiNumber) {
+        return venueRepository.countOtherVenuesWithFssai(fssaiNumber, venueId);
+    }
+
+    @PreAuthorize("hasRole('PLATFORM_ADMIN')")
+    public void approveVerification(UUID venueId) {
+        requireExists(venueId);
+        int updated;
+        try {
+            updated = venueRepository.approvePending(venueId);
+        } catch (DataIntegrityViolationException e) {
+            // The partial unique index: another venue is already VERIFIED with this FSSAI number.
+            throw VerificationStateException.fssaiAlreadyVerified();
+        }
+        if (updated == 0) {
+            throw VerificationStateException.notPending();
+        }
+    }
+
+    @PreAuthorize("hasRole('PLATFORM_ADMIN')")
+    public void rejectVerification(UUID venueId, String reason) {
+        requireExists(venueId);
+        if (venueRepository.rejectPending(venueId, reason) == 0) {
+            throw VerificationStateException.notPending();
+        }
+    }
+
+    @PreAuthorize("hasRole('PLATFORM_ADMIN')")
+    @Transactional(readOnly = true)
+    public UUID ownerOf(UUID venueId) {
+        return venueRepository.findById(venueId).map(Venue::getOwnerId)
+                .orElseThrow(() -> new VenueNotFoundException(venueId));
+    }
+
+    private void requireExists(UUID venueId) {
+        if (!venueRepository.existsById(venueId)) {
+            throw new VenueNotFoundException(venueId);
+        }
     }
 
     public SpaceResponse addSpace(UUID ownerId, UUID venueId, SpaceRequest request) {
