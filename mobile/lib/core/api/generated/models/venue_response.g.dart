@@ -23,6 +23,9 @@ VenueResponse _$VenueResponseFromJson(Map<String, dynamic> json) =>
       spaces: (json['spaces'] as List<dynamic>)
           .map((e) => SpaceResponse.fromJson(e as Map<String, dynamic>))
           .toList(),
+      verificationIssues: (json['verificationIssues'] as List<dynamic>)
+          .map((e) => VenueResponseVerificationIssues.fromJson(e as String))
+          .toList(),
       verificationStatus: VenueResponseVerificationStatus.fromJson(
         json['verificationStatus'] as String,
       ),
@@ -42,6 +45,9 @@ Map<String, dynamic> _$VenueResponseToJson(
   'name': instance.name,
   'rejectionReason': instance.rejectionReason,
   'spaces': instance.spaces,
+  'verificationIssues': instance.verificationIssues
+      .map((e) => _$VenueResponseVerificationIssuesEnumMap[e]!)
+      .toList(),
   'verificationStatus':
       _$VenueResponseVerificationStatusEnumMap[instance.verificationStatus]!,
 };
@@ -50,6 +56,14 @@ const _$VenueResponseHostingModeEnumMap = {
   VenueResponseHostingMode.open: 'OPEN',
   VenueResponseHostingMode.selfOnly: 'SELF_ONLY',
   VenueResponseHostingMode.$unknown: r'$unknown',
+};
+
+const _$VenueResponseVerificationIssuesEnumMap = {
+  VenueResponseVerificationIssues.fssaiNumber: 'FSSAI_NUMBER',
+  VenueResponseVerificationIssues.fssaiCertificate: 'FSSAI_CERTIFICATE',
+  VenueResponseVerificationIssues.leaseAgreement: 'LEASE_AGREEMENT',
+  VenueResponseVerificationIssues.venueDetails: 'VENUE_DETAILS',
+  VenueResponseVerificationIssues.$unknown: r'$unknown',
 };
 
 const _$VenueResponseVerificationStatusEnumMap = {

@@ -5,6 +5,9 @@
 import 'package:dio/dio.dart';
 import 'package:retrofit/retrofit.dart';
 
+import '../models/document_response.dart';
+import '../models/document_upload_request.dart';
+import '../models/document_upload_response.dart';
 import '../models/space_request.dart';
 import '../models/space_response.dart';
 import '../models/venue_request.dart';
@@ -39,6 +42,29 @@ abstract class VenuesClient {
   Future<VenueResponse> updateVenue({
     @Path('venueId') required String venueId,
     @Body() required VenueRequest body,
+  });
+
+  @GET('/api/v1/venues/{venueId}/documents')
+  Future<List<DocumentResponse>> venueDocuments({
+    @Path('venueId') required String venueId,
+  });
+
+  @POST('/api/v1/venues/{venueId}/documents')
+  Future<DocumentUploadResponse> startVenueDocumentUpload({
+    @Path('venueId') required String venueId,
+    @Body() required DocumentUploadRequest body,
+  });
+
+  @DELETE('/api/v1/venues/{venueId}/documents/{documentId}')
+  Future<void> deleteVenueDocument({
+    @Path('venueId') required String venueId,
+    @Path('documentId') required String documentId,
+  });
+
+  @POST('/api/v1/venues/{venueId}/documents/{documentId}/confirm')
+  Future<DocumentResponse> confirmVenueDocument({
+    @Path('venueId') required String venueId,
+    @Path('documentId') required String documentId,
   });
 
   @POST('/api/v1/venues/{venueId}/resubmit')

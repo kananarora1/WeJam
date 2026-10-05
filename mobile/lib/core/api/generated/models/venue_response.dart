@@ -6,6 +6,7 @@ import 'package:json_annotation/json_annotation.dart';
 
 import 'space_response.dart';
 import 'venue_response_hosting_mode.dart';
+import 'venue_response_verification_issues.dart';
 import 'venue_response_verification_status.dart';
 
 part 'venue_response.g.dart';
@@ -24,6 +25,7 @@ class VenueResponse {
     required this.name,
     required this.rejectionReason,
     required this.spaces,
+    required this.verificationIssues,
     required this.verificationStatus,
   });
   
@@ -40,6 +42,9 @@ class VenueResponse {
   final String name;
   final String? rejectionReason;
   final List<SpaceResponse> spaces;
+
+  /// What to fix after a rejection; empty otherwise
+  final List<VenueResponseVerificationIssues> verificationIssues;
   final VenueResponseVerificationStatus verificationStatus;
 
   Map<String, Object?> toJson() => _$VenueResponseToJson(this);

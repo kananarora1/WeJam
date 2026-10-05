@@ -4,6 +4,7 @@
 
 import 'package:json_annotation/json_annotation.dart';
 
+import 'document_response.dart';
 import 'venue_response.dart';
 import 'verification_checks.dart';
 
@@ -13,6 +14,7 @@ part 'venue_review_response.g.dart';
 class VenueReviewResponse {
   const VenueReviewResponse({
     required this.checks,
+    required this.documents,
     required this.ownerName,
     required this.ownerPhone,
     required this.venue,
@@ -21,6 +23,9 @@ class VenueReviewResponse {
   factory VenueReviewResponse.fromJson(Map<String, Object?> json) => _$VenueReviewResponseFromJson(json);
   
   final VerificationChecks checks;
+
+  /// Uploaded documents with 5-minute download links
+  final List<DocumentResponse> documents;
   final String? ownerName;
   final String? ownerPhone;
   final VenueResponse venue;

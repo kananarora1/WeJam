@@ -52,6 +52,6 @@ class VenueVerificationController {
     @PostMapping("/venues/{venueId}/reject")
     VenueResponse rejectVenue(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID venueId,
                               @Valid @RequestBody RejectVerificationRequest request) {
-        return verificationService.reject(CurrentUser.id(jwt), venueId, request.reason());
+        return verificationService.reject(CurrentUser.id(jwt), venueId, request.reason(), request.issuesOrEmpty());
     }
 }

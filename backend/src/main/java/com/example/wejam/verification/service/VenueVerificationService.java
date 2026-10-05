@@ -7,6 +7,7 @@ import com.example.wejam.auth.dto.UserSummary;
 import com.example.wejam.auth.service.UserService;
 import com.example.wejam.venue.dto.VenueResponse;
 import com.example.wejam.venue.dto.VenueVerificationRow;
+import com.example.wejam.venue.model.VerificationIssue;
 import com.example.wejam.venue.model.VerificationStatus;
 import com.example.wejam.venue.service.VenueService;
 import com.example.wejam.verification.dto.VenueReviewResponse;
@@ -18,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 /** Platform admin: review venues. Status writes stay in the venue module; this records who decided what. */
@@ -31,12 +33,14 @@ public class VenueVerificationService {
     private final VenueService venueService;
     private final UserService userService;
     private final AdminActionService adminActions;
+    private final VenueDocumentService documents;
 
     public VenueVerificationService(VenueService venueService, UserService userService,
-                                    AdminActionService adminActions) {
+                                    AdminActionService adminActions, VenueDocumentService documents) {
         this.venueService = venueService;
         this.userService = userService;
         this.adminActions = adminActions;
+        this.documents = documents;
     }
 
     /** Oldest request first. */
@@ -57,7 +61,8 @@ public class VenueVerificationService {
         UserSummary owner = userService.summaries(List.of(ownerId)).get(ownerId);
         VerificationChecks checks = new VerificationChecks(FssaiChecks.structureLooksValid(venue.fssaiNumber()),
                 venueService.countOtherVenuesWithFssai(venueId, venue.fssaiNumber()));
-        return new VenueReviewResponse(venue, nameOf(owner), owner == null ? null : owner.phone(), checks);
+        return new VenueReviewResponse(venue, nameOf(owner), owner == null ? null : owner.phone(), checks,
+                documents.uploadedDocuments(venueId));
     }
 
     public VenueResponse approve(UUID adminId, UUID venueId) {
@@ -66,9 +71,9 @@ public class VenueVerificationService {
         return venueService.get(venueId);
     }
 
-    public VenueResponse reject(UUID adminId, UUID venueId, String reason) {
+    public VenueResponse reject(UUID adminId, UUID venueId, String reason, Set<VerificationIssue> issues) {
         String trimmed = reason.strip();
-        venueService.rejectVerification(venueId, trimmed);
+        venueService.rejectVerification(venueId, trimmed, issues);
         adminActions.record(adminId, AdminActionType.VENUE_REJECTED, AdminTargetType.VENUE, venueId, trimmed);
         return venueService.get(venueId);
     }

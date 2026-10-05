@@ -44,21 +44,23 @@ public interface VenueRepository extends JpaRepository<Venue, UUID> {
     /** Conditional: only a PENDING venue can be decided, so two admins can't both decide it. */
     @Modifying(clearAutomatically = true)
     @Query(value = """
-            UPDATE venues SET verification_status = 'VERIFIED', rejection_reason = NULL
+            UPDATE venues SET verification_status = 'VERIFIED', rejection_reason = NULL, verification_issues = '{}'
             WHERE id = :venueId AND verification_status = 'PENDING'
             """, nativeQuery = true)
     int approvePending(UUID venueId);
 
     @Modifying(clearAutomatically = true)
     @Query(value = """
-            UPDATE venues SET verification_status = 'REJECTED', rejection_reason = :reason
+            UPDATE venues SET verification_status = 'REJECTED', rejection_reason = :reason,
+                              verification_issues = CAST(:issuesArrayLiteral AS text[])
             WHERE id = :venueId AND verification_status = 'PENDING'
             """, nativeQuery = true)
-    int rejectPending(UUID venueId, String reason);
+    int rejectPending(UUID venueId, String reason, String issuesArrayLiteral);
 
     @Modifying(clearAutomatically = true)
     @Query(value = """
-            UPDATE venues SET verification_status = 'PENDING', rejection_reason = NULL, verification_requested_at = now()
+            UPDATE venues SET verification_status = 'PENDING', rejection_reason = NULL, verification_issues = '{}',
+                              verification_requested_at = now()
             WHERE id = :venueId AND owner_id = :ownerId AND verification_status = 'REJECTED'
             """, nativeQuery = true)
     int resubmitRejected(UUID venueId, UUID ownerId);

@@ -10,9 +10,13 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.DynamicUpdate;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.Instant;
+import java.util.Arrays;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -60,6 +64,11 @@ public class Venue {
     @Column(name = "verification_requested_at")
     private Instant verificationRequestedAt;
 
+    /** text[] of VerificationIssue names; written by the admin's reject statement. */
+    @JdbcTypeCode(SqlTypes.ARRAY)
+    @Column(name = "verification_issues")
+    private String[] verificationIssues = new String[0];
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private Instant createdAt;
@@ -97,6 +106,7 @@ public class Venue {
         this.fssaiNumber = fssaiNumber;
         this.verificationStatus = VerificationStatus.PENDING;
         this.rejectionReason = null;
+        this.verificationIssues = new String[0];
         this.verificationRequestedAt = Instant.now();
     }
 
@@ -146,5 +156,9 @@ public class Venue {
 
     public String getRejectionReason() {
         return rejectionReason;
+    }
+
+    public List<VerificationIssue> getVerificationIssues() {
+        return Arrays.stream(verificationIssues).map(VerificationIssue::valueOf).sorted().toList();
     }
 }

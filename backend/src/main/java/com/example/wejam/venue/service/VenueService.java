@@ -13,14 +13,19 @@ import com.example.wejam.venue.model.Space;
 import com.example.wejam.venue.model.Venue;
 import com.example.wejam.venue.repository.SpaceRepository;
 import com.example.wejam.venue.repository.VenueRepository;
+import com.example.wejam.venue.event.VenueDeletedEvent;
+import com.example.wejam.venue.model.VerificationIssue;
 import com.example.wejam.venue.model.VerificationStatus;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Limit;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collection;
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.UUID;
 
 /**
@@ -33,10 +38,13 @@ public class VenueService {
 
     private final VenueRepository venueRepository;
     private final SpaceRepository spaceRepository;
+    private final ApplicationEventPublisher events;
 
-    public VenueService(VenueRepository venueRepository, SpaceRepository spaceRepository) {
+    public VenueService(VenueRepository venueRepository, SpaceRepository spaceRepository,
+                        ApplicationEventPublisher events) {
         this.venueRepository = venueRepository;
         this.spaceRepository = spaceRepository;
+        this.events = events;
     }
 
     @PreAuthorize("hasRole('VENUE_ADMIN')")
@@ -61,6 +69,13 @@ public class VenueService {
     /** Its spaces go with it (ON DELETE CASCADE). */
     public void delete(UUID ownerId, UUID venueId) {
         venueRepository.delete(ownedVenue(ownerId, venueId));
+        events.publishEvent(new VenueDeletedEvent(venueId));
+    }
+
+    /** For modules that attach data to a venue (e.g. documents): 404 unless owned, and its current status. */
+    @Transactional(readOnly = true)
+    public VerificationStatus ownedVenueStatus(UUID ownerId, UUID venueId) {
+        return ownedVenue(ownerId, venueId).getVerificationStatus();
     }
 
     @Transactional(readOnly = true)
@@ -108,9 +123,12 @@ public class VenueService {
     }
 
     @PreAuthorize("hasRole('PLATFORM_ADMIN')")
-    public void rejectVerification(UUID venueId, String reason) {
+    public void rejectVerification(UUID venueId, String reason, Collection<VerificationIssue> issues) {
         requireExists(venueId);
-        if (venueRepository.rejectPending(venueId, reason) == 0) {
+        // A Postgres array literal; enum names contain no commas, quotes or braces, so this is safe to build.
+        String issuesLiteral = issues.stream().map(Enum::name).sorted().distinct()
+                .collect(Collectors.joining(",", "{", "}"));
+        if (venueRepository.rejectPending(venueId, reason, issuesLiteral) == 0) {
             throw VerificationStateException.notPending();
         }
     }

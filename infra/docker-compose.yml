@@ -29,5 +29,36 @@ services:
       timeout: 3s
       retries: 10
 
+  # S3-compatible object storage for local dev (production: R2/S3 with the same code, config only).
+  # MinIO stopped publishing free images; Chainguard's build is the same server (free tier: `latest` only).
+  minio:
+    image: cgr.dev/chainguard/minio:latest
+    command: ["server", "/data", "--console-address", ":9001"]
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-wejam}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-wejam-dev-secret}
+    ports:
+      - "${MINIO_API_PORT:-9000}:9000"
+      - "${MINIO_CONSOLE_PORT:-9001}:9001"
+    volumes:
+      - minio-data:/data
+
+  # One-shot: waits for MinIO, creates the private bucket (no anonymous access), then exits.
+  # The image has no shell or curl, so readiness is checked from here with `mc`.
+  minio-init:
+    image: cgr.dev/chainguard/minio-client:latest-dev
+    depends_on:
+      - minio
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        until mc alias set local http://minio:9000 "$$MINIO_ROOT_USER" "$$MINIO_ROOT_PASSWORD" >/dev/null 2>&1; do sleep 1; done
+        mc mb --ignore-existing local/wejam-private
+        mc anonymous set none local/wejam-private
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-wejam}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-wejam-dev-secret}
+
 volumes:
   postgres-data:
+  minio-data:

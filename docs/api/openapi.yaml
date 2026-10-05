@@ -429,6 +429,97 @@ paths:
           description: OK
       tags:
       - Venues
+  /api/v1/venues/{venueId}/documents:
+    get:
+      operationId: venueDocuments
+      parameters:
+      - in: path
+        name: venueId
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DocumentResponse"
+          description: OK
+      tags:
+      - Venues
+    post:
+      operationId: startVenueDocumentUpload
+      parameters:
+      - in: path
+        name: venueId
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DocumentUploadRequest"
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DocumentUploadResponse"
+          description: Created
+      tags:
+      - Venues
+  /api/v1/venues/{venueId}/documents/{documentId}:
+    delete:
+      operationId: deleteVenueDocument
+      parameters:
+      - in: path
+        name: venueId
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - in: path
+        name: documentId
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "204":
+          description: No Content
+      tags:
+      - Venues
+  /api/v1/venues/{venueId}/documents/{documentId}/confirm:
+    post:
+      operationId: confirmVenueDocument
+      parameters:
+      - in: path
+        name: venueId
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - in: path
+        name: documentId
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DocumentResponse"
+          description: OK
+      tags:
+      - Venues
   /api/v1/venues/{venueId}/resubmit:
     post:
       operationId: resubmitVenue
@@ -597,6 +688,90 @@ components:
       - reason
       - targetId
       - targetType
+    DocumentResponse:
+      type: object
+      properties:
+        contentType:
+          type: string
+        downloadUrl:
+          type: string
+        downloadUrlExpiresAt:
+          type: string
+          format: date-time
+        id:
+          type: string
+          format: uuid
+        sizeBytes:
+          type: integer
+          format: int64
+        type:
+          type: string
+          enum:
+          - FSSAI_CERTIFICATE
+          - LEASE_AGREEMENT
+        uploadedAt:
+          type: string
+          format: date-time
+      required:
+      - contentType
+      - downloadUrl
+      - downloadUrlExpiresAt
+      - id
+      - sizeBytes
+      - type
+      - uploadedAt
+    DocumentUploadRequest:
+      type: object
+      properties:
+        contentType:
+          type: string
+          description: "image/jpeg, image/png or application/pdf"
+          example: application/pdf
+          minLength: 1
+        sizeBytes:
+          type: integer
+          format: int64
+          description: Exact file size; max 10 MB
+          example: 482133
+          maximum: 10485760
+          minimum: 1
+        type:
+          type: string
+          enum:
+          - FSSAI_CERTIFICATE
+          - LEASE_AGREEMENT
+      required:
+      - contentType
+      - sizeBytes
+      - type
+    DocumentUploadResponse:
+      type: object
+      properties:
+        documentId:
+          type: string
+          format: uuid
+        expiresAt:
+          type: string
+          format: date-time
+        headers:
+          type: object
+          additionalProperties:
+            type: string
+            description: "Headers that are part of the signature (e.g. Content-Type,\
+              \ Content-Length)"
+          description: "Headers that are part of the signature (e.g. Content-Type,\
+            \ Content-Length)"
+        method:
+          type: string
+          example: PUT
+        uploadUrl:
+          type: string
+      required:
+      - documentId
+      - expiresAt
+      - headers
+      - method
+      - uploadUrl
     HostInviteResponse:
       type: object
       properties:
@@ -868,6 +1043,20 @@ components:
     RejectVerificationRequest:
       type: object
       properties:
+        issues:
+          type: array
+          description: Items the venue must fix; shown flagged on their side
+          items:
+            type: string
+            description: Items the venue must fix; shown flagged on their side
+            enum:
+            - FSSAI_NUMBER
+            - FSSAI_CERTIFICATE
+            - LEASE_AGREEMENT
+            - VENUE_DETAILS
+            nullable: true
+          nullable: true
+          uniqueItems: true
         reason:
           type: string
           description: Sent verbatim to the venue
@@ -1068,6 +1257,17 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/SpaceResponse"
+        verificationIssues:
+          type: array
+          description: What to fix after a rejection; empty otherwise
+          items:
+            type: string
+            description: What to fix after a rejection; empty otherwise
+            enum:
+            - FSSAI_NUMBER
+            - FSSAI_CERTIFICATE
+            - LEASE_AGREEMENT
+            - VENUE_DETAILS
         verificationStatus:
           type: string
           enum:
@@ -1086,12 +1286,18 @@ components:
       - name
       - rejectionReason
       - spaces
+      - verificationIssues
       - verificationStatus
     VenueReviewResponse:
       type: object
       properties:
         checks:
           $ref: "#/components/schemas/VerificationChecks"
+        documents:
+          type: array
+          description: Uploaded documents with 5-minute download links
+          items:
+            $ref: "#/components/schemas/DocumentResponse"
         ownerName:
           type: string
           nullable: true
@@ -1102,6 +1308,7 @@ components:
           $ref: "#/components/schemas/VenueResponse"
       required:
       - checks
+      - documents
       - ownerName
       - ownerPhone
       - venue
