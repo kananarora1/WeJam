@@ -5,16 +5,22 @@ import com.example.wejam.auth.service.UserService;
 import com.example.wejam.host.dto.HostMemberDto;
 import com.example.wejam.host.dto.HostProfileRequest;
 import com.example.wejam.host.dto.HostProfileResponse;
+import com.example.wejam.host.dto.HostVerificationRow;
+import com.example.wejam.host.dto.HostVerificationState;
 import com.example.wejam.host.exception.HostMembershipException;
 import com.example.wejam.host.exception.HostProfileNotFoundException;
+import com.example.wejam.host.exception.HostVerificationStateException;
 import com.example.wejam.host.exception.InvalidHostProfileException;
 import com.example.wejam.host.model.HostGroupMember;
 import com.example.wejam.host.model.HostProfile;
 import com.example.wejam.host.model.HostType;
+import com.example.wejam.host.model.HostVerificationStatus;
+import com.example.wejam.host.model.IdType;
 import com.example.wejam.host.model.MediaLink;
 import com.example.wejam.host.model.MemberStatus;
 import com.example.wejam.host.repository.HostGroupMemberRepository;
 import com.example.wejam.host.repository.HostProfileRepository;
+import org.springframework.data.domain.Limit;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -75,6 +81,64 @@ public class HostProfileService {
     public HostProfileResponse get(UUID profileId) {
         return toResponse(hostProfileRepository.findWithDetailsById(profileId)
                 .orElseThrow(HostProfileNotFoundException::new));
+    }
+
+    // --- Verification. Optional for hosts: nothing anywhere checks it before letting a host act.
+
+    /** For modules that attach data to the caller's host profile (e.g. ID documents). 404 if they have none. */
+    @Transactional(readOnly = true)
+    public HostVerificationState myVerification(UUID ownerId) {
+        return verificationState(hostProfileRepository.findByOwnerId(ownerId)
+                .orElseThrow(HostProfileNotFoundException::new));
+    }
+
+    /** Owner asks for the badge. Only from NOT_REQUESTED or REJECTED; the conditional update is the real guard. */
+    public void requestVerification(UUID ownerId, IdType idType) {
+        if (hostProfileRepository.requestVerification(ownerId, idType.name()) == 0) {
+            throw HostVerificationStateException.alreadyRequested();
+        }
+    }
+
+    // Decisions, driven by the verification module. Role-checked here too, so no future caller can skip it.
+
+    @PreAuthorize("hasRole('PLATFORM_ADMIN')")
+    @Transactional(readOnly = true)
+    public List<HostVerificationRow> verificationQueue(HostVerificationStatus status, int limit) {
+        return hostProfileRepository.findVerificationQueue(status, Limit.of(limit));
+    }
+
+    @PreAuthorize("hasRole('PLATFORM_ADMIN')")
+    @Transactional(readOnly = true)
+    public HostVerificationState verificationState(UUID profileId) {
+        return verificationState(hostProfileRepository.findById(profileId)
+                .orElseThrow(HostProfileNotFoundException::new));
+    }
+
+    @PreAuthorize("hasRole('PLATFORM_ADMIN')")
+    public void approveVerification(UUID profileId) {
+        requireExists(profileId);
+        if (hostProfileRepository.approvePending(profileId) == 0) {
+            throw HostVerificationStateException.notPending();
+        }
+    }
+
+    @PreAuthorize("hasRole('PLATFORM_ADMIN')")
+    public void rejectVerification(UUID profileId, String reason) {
+        requireExists(profileId);
+        if (hostProfileRepository.rejectPending(profileId, reason) == 0) {
+            throw HostVerificationStateException.notPending();
+        }
+    }
+
+    private void requireExists(UUID profileId) {
+        if (!hostProfileRepository.existsById(profileId)) {
+            throw new HostProfileNotFoundException();
+        }
+    }
+
+    private static HostVerificationState verificationState(HostProfile p) {
+        return new HostVerificationState(p.getId(), p.getOwnerId(), p.getVerificationStatus(), p.getIdType(),
+                p.getRejectionReason(), p.getVerificationRequestedAt());
     }
 
     private HostProfileResponse toResponse(HostProfile profile) {

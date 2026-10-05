@@ -14,5 +14,8 @@ public record DocumentResponse(
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED) long sizeBytes,
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED) Instant uploadedAt,
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED) String downloadUrl,
-        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) Instant downloadUrlExpiresAt) {
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) Instant downloadUrlExpiresAt,
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED, nullable = true,
+                description = "When this file is deleted for good (host IDs); null = kept")
+        Instant scheduledDeletionAt) {
 }

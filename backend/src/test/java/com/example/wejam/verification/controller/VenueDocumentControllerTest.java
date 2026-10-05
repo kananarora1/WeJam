@@ -16,7 +16,6 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
-import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -25,6 +24,7 @@ import static com.example.wejam.TestAuth.bearer;
 import static com.example.wejam.TestAuth.body;
 import static com.example.wejam.TestAuth.exchange;
 import static com.example.wejam.TestAuth.randomUid;
+import static com.example.wejam.verification.VerificationTestSupport.put;
 import static com.jayway.jsonpath.JsonPath.read;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -62,7 +62,9 @@ class VenueDocumentControllerTest {
 
         assertThat(confirmed).hasStatusOk().bodyJson().satisfies(
                 json -> json.assertThat().extractingPath("$.type").isEqualTo("FSSAI_CERTIFICATE"),
-                json -> json.assertThat().extractingPath("$.sizeBytes").isEqualTo(PDF.length));
+                json -> json.assertThat().extractingPath("$.sizeBytes").isEqualTo(PDF.length),
+                // Venue documents are business records: never scheduled for deletion.
+                json -> json.assertThat().extractingPath("$.scheduledDeletionAt").isNull());
         String downloadUrl = read(body(confirmed), "$.downloadUrl");
         HttpResponse<byte[]> download = HTTP.send(HttpRequest.newBuilder(URI.create(downloadUrl)).build(),
                 HttpResponse.BodyHandlers.ofByteArray());
@@ -89,6 +91,8 @@ class VenueDocumentControllerTest {
         assertThat(startUpload(owner, "FSSAI_CERTIFICATE", "application/pdf", 10_485_761)).hasStatus(400)
                 .bodyJson().extractingPath("$.errors.sizeBytes").isNotNull();
         assertThat(startUpload(owner, "FSSAI_CERTIFICATE", "application/pdf", 0)).hasStatus(400);
+        assertThat(startUpload(owner, "ID_FRONT", "application/pdf", 10)).hasStatus(400)
+                .bodyJson().extractingPath("$.errors.type").isEqualTo("is not a venue document type");
     }
 
     @Test
@@ -166,20 +170,6 @@ class VenueDocumentControllerTest {
         assertThat(confirm(owner, documentId)).hasStatusOk();
         return jdbc.queryForObject("SELECT storage_key FROM verification_documents WHERE id = ?", String.class,
                 UUID.fromString(documentId));
-    }
-
-    /** Uploads like the app would. Content-Length comes from the body (Java won't let you set it by hand). */
-    private int put(MvcTestResult start, byte[] bytes, String contentType) throws Exception {
-        Map<String, String> signed = read(body(start), "$.headers");
-        HttpRequest.Builder request = HttpRequest.newBuilder(URI.create(read(body(start), "$.uploadUrl")))
-                .PUT(HttpRequest.BodyPublishers.ofByteArray(bytes));
-        signed.forEach((name, value) -> {
-            if (!name.equalsIgnoreCase("content-length") && !name.equalsIgnoreCase("content-type")) {
-                request.header(name, value);
-            }
-        });
-        request.header("Content-Type", contentType);
-        return HTTP.send(request.build(), HttpResponse.BodyHandlers.discarding()).statusCode();
     }
 
     private MvcTestResult startUpload(String token, String type, String contentType, long size) {

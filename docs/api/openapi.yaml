@@ -33,6 +33,95 @@ paths:
           description: OK
       tags:
       - Admin
+  /api/v1/admin/host-verifications:
+    get:
+      operationId: hostVerificationQueue
+      parameters:
+      - in: query
+        name: status
+        required: false
+        schema:
+          type: string
+          default: PENDING
+          enum:
+          - NOT_REQUESTED
+          - PENDING
+          - VERIFIED
+          - REJECTED
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/HostVerificationItem"
+          description: OK
+      tags:
+      - Admin
+  /api/v1/admin/hosts/{hostProfileId}:
+    get:
+      operationId: reviewHost
+      parameters:
+      - in: path
+        name: hostProfileId
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HostReviewResponse"
+          description: OK
+      tags:
+      - Admin
+  /api/v1/admin/hosts/{hostProfileId}/approve:
+    post:
+      operationId: approveHost
+      parameters:
+      - in: path
+        name: hostProfileId
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HostReviewResponse"
+          description: OK
+      tags:
+      - Admin
+  /api/v1/admin/hosts/{hostProfileId}/reject:
+    post:
+      operationId: rejectHost
+      parameters:
+      - in: path
+        name: hostProfileId
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RejectHostVerificationRequest"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HostReviewResponse"
+          description: OK
+      tags:
+      - Admin
   /api/v1/admin/venue-verifications:
     get:
       operationId: venueVerificationQueue
@@ -276,6 +365,58 @@ paths:
           description: OK
       tags:
       - Hosts
+  /api/v1/me/host-profile/documents:
+    post:
+      operationId: startHostDocumentUpload
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DocumentUploadRequest"
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DocumentUploadResponse"
+          description: Created
+      tags:
+      - Hosts
+  /api/v1/me/host-profile/documents/{documentId}:
+    delete:
+      operationId: deleteHostDocument
+      parameters:
+      - in: path
+        name: documentId
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "204":
+          description: No Content
+      tags:
+      - Hosts
+  /api/v1/me/host-profile/documents/{documentId}/confirm:
+    post:
+      operationId: confirmHostDocument
+      parameters:
+      - in: path
+        name: documentId
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DocumentResponse"
+          description: OK
+      tags:
+      - Hosts
   /api/v1/me/host-profile/invites:
     get:
       operationId: pendingInvites
@@ -320,6 +461,35 @@ paths:
       responses:
         "204":
           description: No Content
+      tags:
+      - Hosts
+  /api/v1/me/host-profile/verification:
+    get:
+      operationId: myHostVerification
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HostVerificationResponse"
+          description: OK
+      tags:
+      - Hosts
+    post:
+      operationId: requestHostVerification
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HostVerificationRequest"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HostVerificationResponse"
+          description: OK
       tags:
       - Hosts
   /api/v1/me/roles:
@@ -657,6 +827,8 @@ components:
           enum:
           - VENUE_APPROVED
           - VENUE_REJECTED
+          - HOST_APPROVED
+          - HOST_REJECTED
         adminId:
           type: string
           format: uuid
@@ -679,6 +851,7 @@ components:
           type: string
           enum:
           - VENUE
+          - HOST_PROFILE
       required:
       - action
       - adminId
@@ -701,6 +874,11 @@ components:
         id:
           type: string
           format: uuid
+        scheduledDeletionAt:
+          type: string
+          format: date-time
+          description: When this file is deleted for good (host IDs); null = kept
+          nullable: true
         sizeBytes:
           type: integer
           format: int64
@@ -709,6 +887,8 @@ components:
           enum:
           - FSSAI_CERTIFICATE
           - LEASE_AGREEMENT
+          - ID_FRONT
+          - ID_BACK
         uploadedAt:
           type: string
           format: date-time
@@ -717,6 +897,7 @@ components:
       - downloadUrl
       - downloadUrlExpiresAt
       - id
+      - scheduledDeletionAt
       - sizeBytes
       - type
       - uploadedAt
@@ -740,6 +921,8 @@ components:
           enum:
           - FSSAI_CERTIFICATE
           - LEASE_AGREEMENT
+          - ID_FRONT
+          - ID_BACK
       required:
       - contentType
       - sizeBytes
@@ -956,6 +1139,10 @@ components:
           enum:
           - INDIVIDUAL
           - GROUP
+        verified:
+          type: boolean
+          description: Show a badge when true; show nothing when false (never an 'unverified'
+            label)
       required:
       - area
       - bio
@@ -967,6 +1154,139 @@ components:
       - mediaLinks
       - members
       - type
+      - verified
+    HostReviewResponse:
+      type: object
+      properties:
+        documents:
+          type: array
+          description: Uploaded ID sides with 5-minute download links
+          items:
+            $ref: "#/components/schemas/DocumentResponse"
+        idType:
+          type: string
+          enum:
+          - COLLEGE_ID
+          - COMPANY_ID
+          nullable: true
+        ownerName:
+          type: string
+          nullable: true
+        ownerPhone:
+          type: string
+          nullable: true
+        profile:
+          $ref: "#/components/schemas/HostProfileResponse"
+        rejectionReason:
+          type: string
+          nullable: true
+        requestedAt:
+          type: string
+          format: date-time
+          nullable: true
+        status:
+          type: string
+          enum:
+          - NOT_REQUESTED
+          - PENDING
+          - VERIFIED
+          - REJECTED
+      required:
+      - documents
+      - idType
+      - ownerName
+      - ownerPhone
+      - profile
+      - rejectionReason
+      - requestedAt
+      - status
+    HostVerificationItem:
+      type: object
+      properties:
+        displayName:
+          type: string
+          description: "Group name, or the owner's display name for an individual"
+          nullable: true
+        hostProfileId:
+          type: string
+          format: uuid
+        idType:
+          type: string
+          enum:
+          - COLLEGE_ID
+          - COMPANY_ID
+        ownerName:
+          type: string
+          nullable: true
+        requestedAt:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum:
+          - NOT_REQUESTED
+          - PENDING
+          - VERIFIED
+          - REJECTED
+        type:
+          type: string
+          enum:
+          - INDIVIDUAL
+          - GROUP
+      required:
+      - displayName
+      - hostProfileId
+      - idType
+      - ownerName
+      - requestedAt
+      - status
+      - type
+    HostVerificationRequest:
+      type: object
+      properties:
+        idType:
+          type: string
+          enum:
+          - COLLEGE_ID
+          - COMPANY_ID
+      required:
+      - idType
+    HostVerificationResponse:
+      type: object
+      properties:
+        documents:
+          type: array
+          description: Uploaded ID sides with 5-minute download links and their deletion
+            date
+          items:
+            $ref: "#/components/schemas/DocumentResponse"
+        idType:
+          type: string
+          enum:
+          - COLLEGE_ID
+          - COMPANY_ID
+          nullable: true
+        rejectionReason:
+          type: string
+          nullable: true
+        requestedAt:
+          type: string
+          format: date-time
+          nullable: true
+        status:
+          type: string
+          description: "Optional perk: NOT_REQUESTED is a normal state, not a problem"
+          enum:
+          - NOT_REQUESTED
+          - PENDING
+          - VERIFIED
+          - REJECTED
+      required:
+      - documents
+      - idType
+      - rejectionReason
+      - requestedAt
+      - status
     InviteMemberRequest:
       type: object
       properties:
@@ -1040,6 +1360,18 @@ components:
       - invitedAt
       - maskedPhone
       - userId
+    RejectHostVerificationRequest:
+      type: object
+      properties:
+        reason:
+          type: string
+          description: Sent verbatim to the host; never shown to anyone else
+          example: The photo is too blurry to read the name. Please upload a clearer
+            picture of the front.
+          maxLength: 500
+          minLength: 0
+      required:
+      - reason
     RejectVerificationRequest:
       type: object
       properties:

@@ -10,6 +10,10 @@ enum DocumentUploadRequestType {
   fssaiCertificate('FSSAI_CERTIFICATE'),
   @JsonValue('LEASE_AGREEMENT')
   leaseAgreement('LEASE_AGREEMENT'),
+  @JsonValue('ID_FRONT')
+  idFront('ID_FRONT'),
+  @JsonValue('ID_BACK')
+  idBack('ID_BACK'),
   /// Default value for all unparsed values, allows backward compatibility when adding new values on the backend.
   $unknown(null);
 

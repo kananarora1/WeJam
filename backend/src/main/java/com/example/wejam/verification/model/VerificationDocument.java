@@ -49,6 +49,10 @@ public class VerificationDocument {
     @Column(name = "uploaded_at")
     private Instant uploadedAt;
 
+    /** When the cleanup job deletes this document and its file; null = kept. */
+    @Column(name = "delete_after")
+    private Instant deleteAfter;
+
     protected VerificationDocument() {
     }
 
@@ -67,6 +71,10 @@ public class VerificationDocument {
     public void markUploaded() {
         this.status = DocumentStatus.UPLOADED;
         this.uploadedAt = Instant.now();
+    }
+
+    public void scheduleDeletion(Instant at) {
+        this.deleteAfter = at;
     }
 
     public UUID getId() {
@@ -103,5 +111,9 @@ public class VerificationDocument {
 
     public Instant getUploadedAt() {
         return uploadedAt;
+    }
+
+    public Instant getDeleteAfter() {
+        return deleteAfter;
     }
 }

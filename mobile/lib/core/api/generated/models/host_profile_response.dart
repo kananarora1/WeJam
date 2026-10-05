@@ -25,6 +25,7 @@ class HostProfileResponse {
     required this.mediaLinks,
     required this.members,
     required this.type,
+    required this.verified,
   });
   
   factory HostProfileResponse.fromJson(Map<String, Object?> json) => _$HostProfileResponseFromJson(json);
@@ -43,6 +44,9 @@ class HostProfileResponse {
   /// Owner first (admin), then accepted members. Pending invites are never listed here.
   final List<HostMemberDto> members;
   final HostProfileResponseType type;
+
+  /// Show a badge when true; show nothing when false (never an 'unverified' label)
+  final bool verified;
 
   Map<String, Object?> toJson() => _$HostProfileResponseToJson(this);
 }

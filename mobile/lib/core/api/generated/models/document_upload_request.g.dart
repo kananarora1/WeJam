@@ -25,5 +25,7 @@ Map<String, dynamic> _$DocumentUploadRequestToJson(
 const _$DocumentUploadRequestTypeEnumMap = {
   DocumentUploadRequestType.fssaiCertificate: 'FSSAI_CERTIFICATE',
   DocumentUploadRequestType.leaseAgreement: 'LEASE_AGREEMENT',
+  DocumentUploadRequestType.idFront: 'ID_FRONT',
+  DocumentUploadRequestType.idBack: 'ID_BACK',
   DocumentUploadRequestType.$unknown: r'$unknown',
 };

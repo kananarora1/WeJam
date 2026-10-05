@@ -15,6 +15,7 @@ class DocumentResponse {
     required this.downloadUrl,
     required this.downloadUrlExpiresAt,
     required this.id,
+    required this.scheduledDeletionAt,
     required this.sizeBytes,
     required this.type,
     required this.uploadedAt,
@@ -26,6 +27,9 @@ class DocumentResponse {
   final String downloadUrl;
   final DateTime downloadUrlExpiresAt;
   final String id;
+
+  /// When this file is deleted for good (host IDs); null = kept
+  final DateTime? scheduledDeletionAt;
   final int sizeBytes;
   final DocumentResponseType type;
   final DateTime uploadedAt;

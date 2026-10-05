@@ -4,6 +4,7 @@ import com.example.wejam.common.model.Genre;
 import com.example.wejam.host.model.GroupKind;
 import com.example.wejam.host.model.HostProfile;
 import com.example.wejam.host.model.HostType;
+import com.example.wejam.host.model.HostVerificationStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.List;
@@ -23,12 +24,16 @@ public record HostProfileResponse(
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED) List<MediaLinkDto> mediaLinks,
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED,
                 description = "Owner first (admin), then accepted members. Pending invites are never listed here.")
-        List<HostMemberDto> members) {
+        List<HostMemberDto> members,
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED,
+                description = "Show a badge when true; show nothing when false (never an 'unverified' label)")
+        boolean verified) {
 
     public static HostProfileResponse from(HostProfile profile, String ownerDisplayName, List<HostMemberDto> members) {
         String displayName = profile.getType() == HostType.GROUP ? profile.getGroupName() : ownerDisplayName;
         return new HostProfileResponse(profile.getId(), profile.getType(), profile.getGroupKind(), displayName,
                 profile.getBio(), profile.getArea(), profile.getInstagramHandle(), profile.getGenres(),
-                profile.getMediaLinks().stream().map(l -> new MediaLinkDto(l.url(), l.title())).toList(), members);
+                profile.getMediaLinks().stream().map(l -> new MediaLinkDto(l.url(), l.title())).toList(), members,
+                profile.getVerificationStatus() == HostVerificationStatus.VERIFIED);
     }
 }

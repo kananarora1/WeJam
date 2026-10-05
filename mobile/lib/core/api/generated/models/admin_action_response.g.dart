@@ -36,10 +36,13 @@ Map<String, dynamic> _$AdminActionResponseToJson(
 const _$AdminActionResponseActionEnumMap = {
   AdminActionResponseAction.venueApproved: 'VENUE_APPROVED',
   AdminActionResponseAction.venueRejected: 'VENUE_REJECTED',
+  AdminActionResponseAction.hostApproved: 'HOST_APPROVED',
+  AdminActionResponseAction.hostRejected: 'HOST_REJECTED',
   AdminActionResponseAction.$unknown: r'$unknown',
 };
 
 const _$AdminActionResponseTargetTypeEnumMap = {
   AdminActionResponseTargetType.venue: 'VENUE',
+  AdminActionResponseTargetType.hostProfile: 'HOST_PROFILE',
   AdminActionResponseTargetType.$unknown: r'$unknown',
 };

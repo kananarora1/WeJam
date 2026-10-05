@@ -10,6 +10,10 @@ enum AdminActionResponseAction {
   venueApproved('VENUE_APPROVED'),
   @JsonValue('VENUE_REJECTED')
   venueRejected('VENUE_REJECTED'),
+  @JsonValue('HOST_APPROVED')
+  hostApproved('HOST_APPROVED'),
+  @JsonValue('HOST_REJECTED')
+  hostRejected('HOST_REJECTED'),
   /// Default value for all unparsed values, allows backward compatibility when adding new values on the backend.
   $unknown(null);
 

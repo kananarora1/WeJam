@@ -14,6 +14,9 @@ DocumentResponse _$DocumentResponseFromJson(Map<String, dynamic> json) =>
         json['downloadUrlExpiresAt'] as String,
       ),
       id: json['id'] as String,
+      scheduledDeletionAt: json['scheduledDeletionAt'] == null
+          ? null
+          : DateTime.parse(json['scheduledDeletionAt'] as String),
       sizeBytes: (json['sizeBytes'] as num).toInt(),
       type: DocumentResponseType.fromJson(json['type'] as String),
       uploadedAt: DateTime.parse(json['uploadedAt'] as String),
@@ -25,6 +28,7 @@ Map<String, dynamic> _$DocumentResponseToJson(DocumentResponse instance) =>
       'downloadUrl': instance.downloadUrl,
       'downloadUrlExpiresAt': instance.downloadUrlExpiresAt.toIso8601String(),
       'id': instance.id,
+      'scheduledDeletionAt': instance.scheduledDeletionAt?.toIso8601String(),
       'sizeBytes': instance.sizeBytes,
       'type': _$DocumentResponseTypeEnumMap[instance.type]!,
       'uploadedAt': instance.uploadedAt.toIso8601String(),
@@ -33,5 +37,7 @@ Map<String, dynamic> _$DocumentResponseToJson(DocumentResponse instance) =>
 const _$DocumentResponseTypeEnumMap = {
   DocumentResponseType.fssaiCertificate: 'FSSAI_CERTIFICATE',
   DocumentResponseType.leaseAgreement: 'LEASE_AGREEMENT',
+  DocumentResponseType.idFront: 'ID_FRONT',
+  DocumentResponseType.idBack: 'ID_BACK',
   DocumentResponseType.$unknown: r'$unknown',
 };

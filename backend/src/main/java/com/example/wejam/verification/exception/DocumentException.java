@@ -44,8 +44,21 @@ public class DocumentException extends ErrorResponseException {
                 Map.of("contentType", "must be image/jpeg, image/png or application/pdf"));
     }
 
-    public static DocumentException notAVenueDocument() {
-        return new DocumentException(HttpStatus.BAD_REQUEST, "Invalid request content.",
-                Map.of("type", "is not a venue document type"));
+    public static DocumentException hostAlreadyVerified() {
+        return new DocumentException(HttpStatus.CONFLICT, "You're already verified; your ID can't be changed");
+    }
+
+    public static DocumentException underReview() {
+        return new DocumentException(HttpStatus.CONFLICT,
+                "Your ID is being reviewed; it can't be changed until there's a decision");
+    }
+
+    public static DocumentException idFrontRequired() {
+        return new DocumentException(HttpStatus.CONFLICT, "Upload the front of your ID first");
+    }
+
+    /** {@code expected} completes "type …", e.g. "is not a venue document type". */
+    public static DocumentException wrongDocumentType(String expected) {
+        return new DocumentException(HttpStatus.BAD_REQUEST, "Invalid request content.", Map.of("type", expected));
     }
 }

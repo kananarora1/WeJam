@@ -56,6 +56,22 @@ public class HostProfile {
     @Column(name = "member_count", insertable = false, updatable = false)
     private int memberCount;
 
+    // Verification fields are read-only here: only the conditional updates in HostProfileRepository write them,
+    // so saving a profile edit can never overwrite an admin's decision with a stale value.
+    @Enumerated(EnumType.STRING)
+    @Column(name = "verification_status", insertable = false, updatable = false)
+    private HostVerificationStatus verificationStatus;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "id_type", insertable = false, updatable = false)
+    private IdType idType;
+
+    @Column(name = "verification_requested_at", insertable = false, updatable = false)
+    private Instant verificationRequestedAt;
+
+    @Column(name = "rejection_reason", insertable = false, updatable = false)
+    private String rejectionReason;
+
     @ElementCollection
     @CollectionTable(name = "host_profile_genres", joinColumns = @JoinColumn(name = "host_profile_id"))
     @Enumerated(EnumType.STRING)
@@ -140,6 +156,23 @@ public class HostProfile {
 
     public int getMemberCount() {
         return memberCount;
+    }
+
+    /** Null right after the first insert (the DB default applies), which means NOT_REQUESTED. */
+    public HostVerificationStatus getVerificationStatus() {
+        return verificationStatus == null ? HostVerificationStatus.NOT_REQUESTED : verificationStatus;
+    }
+
+    public IdType getIdType() {
+        return idType;
+    }
+
+    public Instant getVerificationRequestedAt() {
+        return verificationRequestedAt;
+    }
+
+    public String getRejectionReason() {
+        return rejectionReason;
     }
 
     /** In the enum's order, so responses are stable. */

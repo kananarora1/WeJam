@@ -26,6 +26,7 @@ HostProfileResponse _$HostProfileResponseFromJson(Map<String, dynamic> json) =>
           .map((e) => HostMemberDto.fromJson(e as Map<String, dynamic>))
           .toList(),
       type: HostProfileResponseType.fromJson(json['type'] as String),
+      verified: json['verified'] as bool,
     );
 
 Map<String, dynamic> _$HostProfileResponseToJson(
@@ -43,6 +44,7 @@ Map<String, dynamic> _$HostProfileResponseToJson(
   'mediaLinks': instance.mediaLinks,
   'members': instance.members,
   'type': _$HostProfileResponseTypeEnumMap[instance.type]!,
+  'verified': instance.verified,
 };
 
 const _$HostProfileResponseGenresEnumMap = {
