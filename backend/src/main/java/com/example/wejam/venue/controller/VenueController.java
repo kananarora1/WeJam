@@ -44,8 +44,8 @@ class VenueController {
 
     /** Readable by any signed-in user: hosts browse venues when requesting a slot. */
     @GetMapping("/venues/{venueId}")
-    VenueResponse getVenue(@PathVariable UUID venueId) {
-        return venueService.get(venueId);
+    VenueResponse getVenue(@AuthenticationPrincipal Jwt jwt, @PathVariable UUID venueId) {
+        return venueService.getVisible(CurrentUser.id(jwt), venueId);
     }
 
     @PutMapping("/venues/{venueId}")

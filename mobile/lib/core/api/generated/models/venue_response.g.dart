@@ -11,7 +11,11 @@ VenueResponse _$VenueResponseFromJson(Map<String, dynamic> json) =>
       addressLine: json['addressLine'] as String,
       city: json['city'] as String,
       description: json['description'] as String?,
+      fssaiLicenseName: json['fssaiLicenseName'] as String?,
       fssaiNumber: json['fssaiNumber'] as String,
+      fssaiValidUntil: json['fssaiValidUntil'] == null
+          ? null
+          : DateTime.parse(json['fssaiValidUntil'] as String),
       hostingMode: VenueResponseHostingMode.fromJson(
         json['hostingMode'] as String,
       ),
@@ -37,7 +41,9 @@ Map<String, dynamic> _$VenueResponseToJson(
   'addressLine': instance.addressLine,
   'city': instance.city,
   'description': instance.description,
+  'fssaiLicenseName': instance.fssaiLicenseName,
   'fssaiNumber': instance.fssaiNumber,
+  'fssaiValidUntil': instance.fssaiValidUntil?.toIso8601String(),
   'hostingMode': _$VenueResponseHostingModeEnumMap[instance.hostingMode]!,
   'id': instance.id,
   'latitude': instance.latitude,

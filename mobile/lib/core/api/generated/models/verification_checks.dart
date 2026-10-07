@@ -10,6 +10,7 @@ part 'verification_checks.g.dart';
 class VerificationChecks {
   const VerificationChecks({
     required this.fssaiStructureLooksValid,
+    required this.licenseExpired,
     required this.otherVenuesWithSameFssai,
   });
   
@@ -17,6 +18,9 @@ class VerificationChecks {
   
   /// 14 digits, licence type 1/2, state code 01–38 (offline heuristic, not the registry)
   final bool fssaiStructureLooksValid;
+
+  /// The 'valid until' date has passed (false when it isn't known yet)
+  final bool licenseExpired;
 
   /// Other venues using the same FSSAI number
   final int otherVenuesWithSameFssai;

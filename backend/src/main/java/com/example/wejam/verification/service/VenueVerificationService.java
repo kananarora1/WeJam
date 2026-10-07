@@ -17,6 +17,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -48,10 +49,11 @@ public class VenueVerificationService {
     public List<VenueVerificationItem> queue(VerificationStatus status) {
         List<VenueVerificationRow> rows = venueService.verificationQueue(status, QUEUE_LIMIT);
         Map<UUID, UserSummary> owners = userService.summaries(rows.stream().map(VenueVerificationRow::ownerId).distinct().toList());
+        LocalDate today = LocalDate.now();
         return rows.stream().map(r -> new VenueVerificationItem(r.venueId(), r.name(), r.city(),
-                nameOf(owners.get(r.ownerId())), r.fssaiNumber(), r.status(), r.requestedAt(),
+                nameOf(owners.get(r.ownerId())), r.fssaiNumber(), r.fssaiValidUntil(), r.status(), r.requestedAt(),
                 new VerificationChecks(FssaiChecks.structureLooksValid(r.fssaiNumber()),
-                        r.otherVenuesWithSameFssai()))).toList();
+                        r.otherVenuesWithSameFssai(), FssaiChecks.expired(r.fssaiValidUntil(), today)))).toList();
     }
 
     @Transactional(readOnly = true)
@@ -60,7 +62,8 @@ public class VenueVerificationService {
         UUID ownerId = venueService.ownerOf(venueId);
         UserSummary owner = userService.summaries(List.of(ownerId)).get(ownerId);
         VerificationChecks checks = new VerificationChecks(FssaiChecks.structureLooksValid(venue.fssaiNumber()),
-                venueService.countOtherVenuesWithFssai(venueId, venue.fssaiNumber()));
+                venueService.countOtherVenuesWithFssai(venueId, venue.fssaiNumber()),
+                FssaiChecks.expired(venue.fssaiValidUntil(), LocalDate.now()));
         return new VenueReviewResponse(venue, nameOf(owner), owner == null ? null : owner.phone(), checks,
                 documents.uploadedDocuments(venueId));
     }

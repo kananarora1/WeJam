@@ -15,6 +15,7 @@ import org.hibernate.type.SqlTypes;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
@@ -49,6 +50,12 @@ public class Venue {
 
     @Column(name = "fssai_number")
     private String fssaiNumber;
+
+    @Column(name = "fssai_license_name")
+    private String fssaiLicenseName;
+
+    @Column(name = "fssai_valid_until")
+    private LocalDate fssaiValidUntil;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "hosting_mode")
@@ -98,16 +105,30 @@ public class Venue {
         this.hostingMode = hostingMode;
     }
 
-    /** A verification covers one license number, so a different number needs verifying again. */
-    public void changeFssaiNumber(String fssaiNumber) {
-        if (fssaiNumber.equals(this.fssaiNumber)) {
+    /**
+     * A verification covers exactly these license details (number, name on it, expiry), so changing any of
+     * them — a renewal included — needs verifying again.
+     */
+    public void changeLicense(String fssaiNumber, String licenseName, LocalDate validUntil) {
+        if (fssaiNumber.equals(this.fssaiNumber) && licenseName.equals(this.fssaiLicenseName)
+                && validUntil.equals(this.fssaiValidUntil)) {
             return;
         }
         this.fssaiNumber = fssaiNumber;
+        this.fssaiLicenseName = licenseName;
+        this.fssaiValidUntil = validUntil;
         this.verificationStatus = VerificationStatus.PENDING;
         this.rejectionReason = null;
         this.verificationIssues = new String[0];
         this.verificationRequestedAt = Instant.now();
+    }
+
+    public String getFssaiLicenseName() {
+        return fssaiLicenseName;
+    }
+
+    public LocalDate getFssaiValidUntil() {
+        return fssaiValidUntil;
     }
 
     public UUID getId() {

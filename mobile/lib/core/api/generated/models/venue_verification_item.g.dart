@@ -12,6 +12,9 @@ VenueVerificationItem _$VenueVerificationItemFromJson(
   checks: VerificationChecks.fromJson(json['checks'] as Map<String, dynamic>),
   city: json['city'] as String,
   fssaiNumber: json['fssaiNumber'] as String,
+  fssaiValidUntil: json['fssaiValidUntil'] == null
+      ? null
+      : DateTime.parse(json['fssaiValidUntil'] as String),
   name: json['name'] as String,
   ownerName: json['ownerName'] as String?,
   requestedAt: DateTime.parse(json['requestedAt'] as String),
@@ -25,6 +28,7 @@ Map<String, dynamic> _$VenueVerificationItemToJson(
   'checks': instance.checks,
   'city': instance.city,
   'fssaiNumber': instance.fssaiNumber,
+  'fssaiValidUntil': instance.fssaiValidUntil?.toIso8601String(),
   'name': instance.name,
   'ownerName': instance.ownerName,
   'requestedAt': instance.requestedAt.toIso8601String(),

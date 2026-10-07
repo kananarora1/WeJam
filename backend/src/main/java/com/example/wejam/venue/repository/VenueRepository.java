@@ -30,7 +30,8 @@ public interface VenueRepository extends JpaRepository<Venue, UUID> {
     /** Review queue with the duplicate-FSSAI check computed in the same query. */
     @Query("""
             SELECT new com.example.wejam.venue.dto.VenueVerificationRow(
-                v.id, v.name, v.city, v.ownerId, v.fssaiNumber, v.verificationStatus, v.verificationRequestedAt,
+                v.id, v.name, v.city, v.ownerId, v.fssaiNumber, v.fssaiValidUntil, v.verificationStatus,
+                v.verificationRequestedAt,
                 (SELECT COUNT(o) FROM Venue o WHERE o.fssaiNumber = v.fssaiNumber AND o.id <> v.id))
             FROM Venue v
             WHERE v.verificationStatus = :status

@@ -4,10 +4,13 @@ import com.example.wejam.venue.model.HostingMode;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.FutureOrPresent;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
+
+import java.time.LocalDate;
 
 /** Full replacement on PUT, creation on POST. Verification status is never taken from a request. */
 public record VenueRequest(
@@ -26,6 +29,13 @@ public record VenueRequest(
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED, example = "12345678901234",
                 description = "FSSAI license number. Changing it resets verification to PENDING.")
         @NotNull @Pattern(regexp = "\\d{14}", message = "must be the 14-digit FSSAI license number") String fssaiNumber,
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED, example = "Amber Hospitality LLP",
+                description = "Business name printed on the license. Changing it resets verification to PENDING.")
+        @NotBlank @Size(max = 120) String fssaiLicenseName,
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED, example = "2028-03-31",
+                description = "Expiry date on the license; can't be in the past. Changing it (e.g. a renewal) "
+                        + "resets verification to PENDING.")
+        @NotNull @FutureOrPresent LocalDate fssaiValidUntil,
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
         @NotNull HostingMode hostingMode) {
 }

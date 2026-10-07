@@ -54,6 +54,16 @@ public class VenueService {
         return VenueResponse.from(venueRepository.save(venue), List.of());
     }
 
+    /** What a user may see: their own venues in any state; others' only once verified (hidden until then). */
+    @Transactional(readOnly = true)
+    public VenueResponse getVisible(UUID viewerId, UUID venueId) {
+        Venue venue = venueRepository.findById(venueId)
+                .filter(v -> v.getOwnerId().equals(viewerId) || v.getVerificationStatus() == VerificationStatus.VERIFIED)
+                .orElseThrow(() -> new VenueNotFoundException(venueId));
+        return withSpaces(venue);
+    }
+
+    /** Any venue, unfiltered: for modules that already checked access (e.g. the platform admin's review). */
     @Transactional(readOnly = true)
     public VenueResponse get(UUID venueId) {
         Venue venue = venueRepository.findById(venueId).orElseThrow(() -> new VenueNotFoundException(venueId));
@@ -183,7 +193,7 @@ public class VenueService {
         venue.updateDetails(request.name().strip(), blankToNull(request.description()),
                 request.addressLine().strip(), request.city().strip(), request.latitude(), request.longitude());
         venue.changeHostingMode(request.hostingMode());
-        venue.changeFssaiNumber(request.fssaiNumber());
+        venue.changeLicense(request.fssaiNumber(), request.fssaiLicenseName().strip(), request.fssaiValidUntil());
     }
 
     private static void apply(Space space, SpaceRequest request) {

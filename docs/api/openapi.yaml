@@ -887,6 +887,7 @@ components:
           enum:
           - FSSAI_CERTIFICATE
           - LEASE_AGREEMENT
+          - OWNER_AGREEMENT
           - ID_FRONT
           - ID_BACK
         uploadedAt:
@@ -921,6 +922,7 @@ components:
           enum:
           - FSSAI_CERTIFICATE
           - LEASE_AGREEMENT
+          - OWNER_AGREEMENT
           - ID_FRONT
           - ID_BACK
       required:
@@ -1515,11 +1517,24 @@ components:
           maxLength: 1000
           minLength: 0
           nullable: true
+        fssaiLicenseName:
+          type: string
+          description: Business name printed on the license. Changing it resets verification
+            to PENDING.
+          example: Amber Hospitality LLP
+          maxLength: 120
+          minLength: 0
         fssaiNumber:
           type: string
           description: FSSAI license number. Changing it resets verification to PENDING.
           example: "12345678901234"
           pattern: "\\d{14}"
+        fssaiValidUntil:
+          type: string
+          format: date
+          description: Expiry date on the license; can't be in the past. Changing
+            it (e.g. a renewal) resets verification to PENDING.
+          example: 2028-03-31
         hostingMode:
           type: string
           enum:
@@ -1549,7 +1564,9 @@ components:
       required:
       - addressLine
       - city
+      - fssaiLicenseName
       - fssaiNumber
+      - fssaiValidUntil
       - hostingMode
       - latitude
       - longitude
@@ -1564,8 +1581,17 @@ components:
         description:
           type: string
           nullable: true
+        fssaiLicenseName:
+          type: string
+          description: Null only for venues created before this field existed
+          nullable: true
         fssaiNumber:
           type: string
+        fssaiValidUntil:
+          type: string
+          format: date
+          description: Null only for venues created before this field existed
+          nullable: true
         hostingMode:
           type: string
           enum:
@@ -1610,7 +1636,9 @@ components:
       - addressLine
       - city
       - description
+      - fssaiLicenseName
       - fssaiNumber
+      - fssaiValidUntil
       - hostingMode
       - id
       - latitude
@@ -1678,6 +1706,10 @@ components:
           type: string
         fssaiNumber:
           type: string
+        fssaiValidUntil:
+          type: string
+          format: date
+          nullable: true
         name:
           type: string
         ownerName:
@@ -1699,6 +1731,7 @@ components:
       - checks
       - city
       - fssaiNumber
+      - fssaiValidUntil
       - name
       - ownerName
       - requestedAt
@@ -1711,12 +1744,17 @@ components:
           type: boolean
           description: "14 digits, licence type 1/2, state code 01–38 (offline heuristic,\
             \ not the registry)"
+        licenseExpired:
+          type: boolean
+          description: The 'valid until' date has passed (false when it isn't known
+            yet)
         otherVenuesWithSameFssai:
           type: integer
           format: int64
           description: Other venues using the same FSSAI number
       required:
       - fssaiStructureLooksValid
+      - licenseExpired
       - otherVenuesWithSameFssai
   securitySchemes:
     bearerAuth:

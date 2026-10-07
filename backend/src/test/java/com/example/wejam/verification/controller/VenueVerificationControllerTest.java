@@ -66,6 +66,8 @@ class VenueVerificationControllerTest {
         String first = createVenue(owner, fssai);
         String second = createVenue(owner, "39" + fssai.substring(2)); // licence type 3 → structure check fails
         createVenue(accessTokenWithRole(mvc, randomUid(), "VENUE_ADMIN"), fssai); // a duplicate of `first`
+        // Expired since it was submitted (the API itself refuses a past date).
+        jdbc.update("UPDATE venues SET fssai_valid_until = DATE '2020-01-31' WHERE id = ?", UUID.fromString(second));
 
         MvcTestResult queue = get("/api/v1/admin/venue-verifications", admin);
 
@@ -77,8 +79,14 @@ class VenueVerificationControllerTest {
                         .asArray().containsExactly(true),
                 json -> json.assertThat().extractingPath("$[?(@.venueId=='" + first + "')].checks.otherVenuesWithSameFssai")
                         .asArray().containsExactly(1),
+                json -> json.assertThat().extractingPath("$[?(@.venueId=='" + first + "')].fssaiValidUntil")
+                        .asArray().containsExactly("2030-03-31"),
+                json -> json.assertThat().extractingPath("$[?(@.venueId=='" + first + "')].checks.licenseExpired")
+                        .asArray().containsExactly(false),
                 json -> json.assertThat().extractingPath("$[?(@.venueId=='" + second + "')].checks.fssaiStructureLooksValid")
-                        .asArray().containsExactly(false));
+                        .asArray().containsExactly(false),
+                json -> json.assertThat().extractingPath("$[?(@.venueId=='" + second + "')].checks.licenseExpired")
+                        .asArray().containsExactly(true));
     }
 
     @Test
@@ -137,8 +145,8 @@ class VenueVerificationControllerTest {
 
         assertThat(post("/api/v1/admin/venues/" + second + "/approve", admin, "")).hasStatus(409)
                 .bodyJson().extractingPath("$.detail").asString().contains("already verified");
-        assertThat(get("/api/v1/venues/" + second, owner)).bodyJson()
-                .extractingPath("$.verificationStatus").isEqualTo("PENDING");
+        assertThat(get("/api/v1/admin/venues/" + second, admin)).bodyJson()
+                .extractingPath("$.venue.verificationStatus").isEqualTo("PENDING");
     }
 
     @Test
@@ -192,7 +200,8 @@ class VenueVerificationControllerTest {
     private String createVenue(String token, String fssai) {
         MvcTestResult result = send(mvc.post().uri("/api/v1/venues"), token, """
                 {"name":"Amber Room","addressLine":"12th Main","city":"Bengaluru","latitude":12.97,"longitude":77.64,
-                 "fssaiNumber":"%s","hostingMode":"OPEN"}
+                 "fssaiNumber":"%s","fssaiLicenseName":"Amber Hospitality LLP","fssaiValidUntil":"2030-03-31",
+                 "hostingMode":"OPEN"}
                 """.formatted(fssai));
         assertThat(result).hasStatus(201);
         return read(body(result), "$.id");

@@ -8,5 +8,8 @@ public record VerificationChecks(
                 description = "14 digits, licence type 1/2, state code 01–38 (offline heuristic, not the registry)")
         boolean fssaiStructureLooksValid,
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "Other venues using the same FSSAI number")
-        long otherVenuesWithSameFssai) {
+        long otherVenuesWithSameFssai,
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED,
+                description = "The 'valid until' date has passed (false when it isn't known yet)")
+        boolean licenseExpired) {
 }

@@ -17,7 +17,9 @@ class VenueResponse {
     required this.addressLine,
     required this.city,
     required this.description,
+    required this.fssaiLicenseName,
     required this.fssaiNumber,
+    required this.fssaiValidUntil,
     required this.hostingMode,
     required this.id,
     required this.latitude,
@@ -34,7 +36,13 @@ class VenueResponse {
   final String addressLine;
   final String city;
   final String? description;
+
+  /// Null only for venues created before this field existed
+  final String? fssaiLicenseName;
   final String fssaiNumber;
+
+  /// Null only for venues created before this field existed
+  final DateTime? fssaiValidUntil;
   final VenueResponseHostingMode hostingMode;
   final String id;
   final double latitude;

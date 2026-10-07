@@ -107,6 +107,15 @@ class VenueDocumentControllerTest {
     }
 
     @Test
+    void proofOfSpaceCanBeALeaseOrAnOwnerAgreement() throws Exception {
+        uploadAndConfirm("LEASE_AGREEMENT");
+        uploadAndConfirm("OWNER_AGREEMENT");
+
+        assertThat(get("/api/v1/venues/" + venueId + "/documents", owner)).bodyJson()
+                .extractingPath("$[*].type").asArray().containsExactlyInAnyOrder("LEASE_AGREEMENT", "OWNER_AGREEMENT");
+    }
+
+    @Test
     void ownerCanDeleteADocumentAndItsFile() throws Exception {
         String key = uploadAndConfirm("LEASE_AGREEMENT");
         String id = jdbc.queryForObject("SELECT id::text FROM verification_documents WHERE storage_key = ?",
@@ -194,7 +203,8 @@ class VenueDocumentControllerTest {
                 .header(HttpHeaders.AUTHORIZATION, bearer(token)).contentType(MediaType.APPLICATION_JSON)
                 .content("""
                         {"name":"Amber Room","addressLine":"12th Main","city":"Bengaluru","latitude":12.97,
-                         "longitude":77.64,"fssaiNumber":"%s","hostingMode":"OPEN"}
+                         "longitude":77.64,"fssaiNumber":"%s","fssaiLicenseName":"Amber Hospitality LLP",
+                         "fssaiValidUntil":"2030-03-31","hostingMode":"OPEN"}
                         """.formatted(fssai))
                 .exchange();
         assertThat(result).hasStatus(201);

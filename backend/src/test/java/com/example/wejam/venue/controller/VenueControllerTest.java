@@ -12,6 +12,7 @@ import org.springframework.test.web.servlet.assertj.MockMvcTester;
 import org.springframework.test.web.servlet.assertj.MvcTestResult;
 
 import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
 
 import static com.example.wejam.TestAuth.accessTokenFor;
 import static com.example.wejam.TestAuth.accessTokenWithRole;
@@ -29,7 +30,8 @@ class VenueControllerTest {
     private static final String VENUE = """
             {"name":"  Amber Room ","description":"Cosy upstairs room","addressLine":"12th Main, HAL 2nd Stage",
              "city":"Bengaluru","latitude":12.9784,"longitude":77.6408,
-             "fssaiNumber":"12345678901234","hostingMode":"OPEN"}
+             "fssaiNumber":"12345678901234","fssaiLicenseName":"Amber Hospitality LLP",
+             "fssaiValidUntil":"2030-03-31","hostingMode":"OPEN"}
             """;
     private static final String SPACE = """
             {"name":"Main floor","capacity":60,"soundPolicy":"AMPLIFIED_ALLOWED","soundCurfew":"23:00",
@@ -61,16 +63,35 @@ class VenueControllerTest {
         String venueId = createVenue(admin);
         assertThat(send(mvc.post().uri("/api/v1/venues/{id}/spaces", venueId), admin, SPACE)).hasStatus(201);
 
-        // Any signed-in user can read a venue.
-        String reader = accessTokenFor(mvc, randomUid());
-        assertThat(get("/api/v1/venues/" + venueId, reader))
+        assertThat(get("/api/v1/venues/" + venueId, admin))
                 .hasStatusOk()
                 .bodyJson()
                 .satisfies(
                         json -> json.assertThat().extractingPath("$.name").isEqualTo("Amber Room"),
                         json -> json.assertThat().extractingPath("$.latitude").isEqualTo(12.9784),
+                        json -> json.assertThat().extractingPath("$.fssaiLicenseName").isEqualTo("Amber Hospitality LLP"),
+                        json -> json.assertThat().extractingPath("$.fssaiValidUntil").isEqualTo("2030-03-31"),
                         json -> json.assertThat().extractingPath("$.spaces[0].name").isEqualTo("Main floor"),
                         json -> json.assertThat().extractingPath("$.spaces[0].capacity").isEqualTo(60));
+    }
+
+    @Test
+    void othersCanOnlySeeAVenueOnceItIsVerified() {
+        // Its own FSSAI number: the database allows only one verified venue per number, and tests share it.
+        MvcTestResult created = send(mvc.post().uri("/api/v1/venues"), admin, VENUE.replace(FSSAI, "29" + randomDigits(12)));
+        assertThat(created).hasStatus(201);
+        String venueId = read(body(created), "$.id");
+        String reader = accessTokenFor(mvc, randomUid());
+
+        // Hidden while pending, and a rejection (with its reason) stays between the venue and the reviewers.
+        assertThat(get("/api/v1/venues/" + venueId, reader)).hasStatus(404);
+        jdbc.update("UPDATE venues SET verification_status = 'REJECTED', rejection_reason = 'Blurry license' "
+                + "WHERE id = ?", UUID.fromString(venueId));
+        assertThat(get("/api/v1/venues/" + venueId, reader)).hasStatus(404);
+
+        markVerified(venueId);
+        assertThat(get("/api/v1/venues/" + venueId, reader)).hasStatusOk()
+                .bodyJson().extractingPath("$.name").isEqualTo("Amber Room");
     }
 
     @Test
@@ -231,6 +252,20 @@ class VenueControllerTest {
     }
 
     @Test
+    void licenseNameAndExpiryAreRequiredAndTheLicenseMustNotHaveExpired() {
+        assertThat(send(mvc.post().uri("/api/v1/venues"), admin,
+                VENUE.replace("\"fssaiLicenseName\":\"Amber Hospitality LLP\",", "")))
+                .hasStatus(400).bodyJson().extractingPath("$.errors.fssaiLicenseName").isNotNull();
+        assertThat(send(mvc.post().uri("/api/v1/venues"), admin, VENUE.replace("Amber Hospitality LLP", "x".repeat(121))))
+                .hasStatus(400).bodyJson().extractingPath("$.errors.fssaiLicenseName").isNotNull();
+        assertThat(send(mvc.post().uri("/api/v1/venues"), admin, VENUE.replace("2030-03-31", "2020-03-31")))
+                .hasStatus(400).bodyJson().extractingPath("$.errors.fssaiValidUntil").isNotNull();
+        assertThat(send(mvc.post().uri("/api/v1/venues"), admin,
+                VENUE.replace("\"fssaiValidUntil\":\"2030-03-31\",", "")))
+                .hasStatus(400).bodyJson().extractingPath("$.errors.fssaiValidUntil").isNotNull();
+    }
+
+    @Test
     void fssaiNumberMustBeExactly14Digits() {
         for (String bad : new String[] {"1234567890123", "123456789012345", "1234567890123A", ""}) {
             assertThat(send(mvc.post().uri("/api/v1/venues"), admin, VENUE.replace(FSSAI, bad)))
@@ -262,7 +297,7 @@ class VenueControllerTest {
     }
 
     @Test
-    void changingFssaiNumberResetsVerificationButOtherEditsDoNot() {
+    void changingAnyLicenseDetailResetsVerificationButOtherEditsDoNot() {
         String venueId = createVenue(admin);
         markVerified(venueId);
 
@@ -270,6 +305,17 @@ class VenueControllerTest {
                 VENUE.replace("Amber Room", "Amber Room & Kitchen")))
                 .hasStatusOk()
                 .bodyJson().extractingPath("$.verificationStatus").isEqualTo("VERIFIED");
+
+        // The name on the license and its expiry are part of what was verified, so a renewal is re-reviewed.
+        for (String changed : new String[] {
+                VENUE.replace("Amber Hospitality LLP", "Amber Foods Pvt Ltd"),
+                VENUE.replace("2030-03-31", "2031-03-31")}) {
+            markVerified(venueId);
+            assertThat(send(mvc.put().uri("/api/v1/venues/{id}", venueId), admin, changed))
+                    .hasStatusOk()
+                    .bodyJson().extractingPath("$.verificationStatus").isEqualTo("PENDING");
+            send(mvc.put().uri("/api/v1/venues/{id}", venueId), admin, VENUE);
+        }
 
         jdbc.update("UPDATE venues SET verification_status = 'REJECTED', rejection_reason = 'Blurry license' "
                 + "WHERE id = ?", UUID.fromString(venueId));
@@ -314,6 +360,10 @@ class VenueControllerTest {
         assertThat(get("/api/v1/me/venues", admin))
                 .hasStatusOk()
                 .bodyJson().extractingPath("$[0].verificationStatus").isEqualTo("VERIFIED");
+    }
+
+    private static String randomDigits(int count) {
+        return String.format("%0" + count + "d", ThreadLocalRandom.current().nextLong((long) Math.pow(10, count)));
     }
 
     private void markVerified(String venueId) {

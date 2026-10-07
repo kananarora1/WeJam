@@ -6,6 +6,7 @@ import com.example.wejam.venue.model.VerificationIssue;
 import com.example.wejam.venue.model.VerificationStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
@@ -18,6 +19,12 @@ public record VenueResponse(
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED) double latitude,
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED) double longitude,
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED) String fssaiNumber,
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED, nullable = true,
+                description = "Null only for venues created before this field existed")
+        String fssaiLicenseName,
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED, nullable = true,
+                description = "Null only for venues created before this field existed")
+        LocalDate fssaiValidUntil,
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED) HostingMode hostingMode,
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED) VerificationStatus verificationStatus,
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED, nullable = true) String rejectionReason,
@@ -28,6 +35,7 @@ public record VenueResponse(
     public static VenueResponse from(Venue venue, List<SpaceResponse> spaces) {
         return new VenueResponse(venue.getId(), venue.getName(), venue.getDescription(), venue.getAddressLine(),
                 venue.getCity(), venue.getLatitude(), venue.getLongitude(), venue.getFssaiNumber(),
+                venue.getFssaiLicenseName(), venue.getFssaiValidUntil(),
                 venue.getHostingMode(), venue.getVerificationStatus(), venue.getRejectionReason(), venue.getVerificationIssues(), spaces);
     }
 }

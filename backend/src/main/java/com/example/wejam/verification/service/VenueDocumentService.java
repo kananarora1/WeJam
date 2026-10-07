@@ -24,7 +24,7 @@ import java.util.UUID;
 public class VenueDocumentService {
 
     private static final Set<DocumentType> VENUE_TYPES =
-            EnumSet.of(DocumentType.FSSAI_CERTIFICATE, DocumentType.LEASE_AGREEMENT);
+            EnumSet.of(DocumentType.FSSAI_CERTIFICATE, DocumentType.LEASE_AGREEMENT, DocumentType.OWNER_AGREEMENT);
 
     private final VerificationDocumentStore store;
     private final VenueService venueService;

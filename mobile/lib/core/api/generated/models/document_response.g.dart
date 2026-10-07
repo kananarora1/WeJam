@@ -37,6 +37,7 @@ Map<String, dynamic> _$DocumentResponseToJson(DocumentResponse instance) =>
 const _$DocumentResponseTypeEnumMap = {
   DocumentResponseType.fssaiCertificate: 'FSSAI_CERTIFICATE',
   DocumentResponseType.leaseAgreement: 'LEASE_AGREEMENT',
+  DocumentResponseType.ownerAgreement: 'OWNER_AGREEMENT',
   DocumentResponseType.idFront: 'ID_FRONT',
   DocumentResponseType.idBack: 'ID_BACK',
   DocumentResponseType.$unknown: r'$unknown',

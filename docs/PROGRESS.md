@@ -156,3 +156,13 @@ Log of completed steps (what was built, key decisions). Newest at the bottom.
 - Config: `wejam.verification.id-retention=30d`, `abandoned-upload-age=24h`, `cleanup-interval=1h`; `wejam.jobs.enabled` (default true, false in tests — tests call the job directly). No new dependencies.
 - Spec + Dart client regenerated (`verified`, host verification models, new enum values). No app UI yet.
 - Tests: 108 backend (+6 owner flow, +5 admin incl. concurrent approve/reject, +5 cleanup job against real MinIO), 37 mobile. Verified on a real boot that the scheduled job fires.
+
+## Step 5d — FSSAI license details, owner agreements, venue privacy fix (2026-10-07)
+- Flyway V12: `venues.fssai_license_name` (≤ 120) + `fssai_valid_until` (date), set together (CHECK); nullable only for venues created before this step. Documents gain `OWNER_AGREEMENT` (design 7.3: proof of space is a rental lease or an owner agreement), still one current file per type.
+- `VenueRequest` requires `fssaiLicenseName` and `fssaiValidUntil` (not in the past) — breaking change to venue create/update; no app screen used it yet. `VenueResponse` returns both.
+- Re-verification: `Venue.changeLicense` replaces `changeFssaiNumber` — changing the number, the name on the license or its expiry (a renewal included) sends a venue back to PENDING. Other edits never do.
+- Admin queue items show `fssaiValidUntil`; automated checks gain `licenseExpired`.
+- Fix (bug since 3b/5a): `GET /venues/{id}` returned any venue — including a rejected one's reason and issue flags — to any signed-in user. Non-owners now get 404 unless the venue is VERIFIED (unverified venues are hidden anyway, design 7.4). Admin review uses its own endpoint. Tests that read someone else's pending venue switched to the admin endpoint.
+- Spec + Dart client regenerated. No app UI yet.
+- Tests: 111 backend (+ license fields required/validated, every license field resets verification, others can't see unverified venues, expired-license check, owner agreement upload), 37 mobile.
+- Deferred: design 7.3 allows up to 3 lease files; we keep one file per type (a multi-page lease is one PDF).

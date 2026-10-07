@@ -9,6 +9,7 @@ part of 'verification_checks.dart';
 VerificationChecks _$VerificationChecksFromJson(Map<String, dynamic> json) =>
     VerificationChecks(
       fssaiStructureLooksValid: json['fssaiStructureLooksValid'] as bool,
+      licenseExpired: json['licenseExpired'] as bool,
       otherVenuesWithSameFssai: (json['otherVenuesWithSameFssai'] as num)
           .toInt(),
     );
@@ -16,5 +17,6 @@ VerificationChecks _$VerificationChecksFromJson(Map<String, dynamic> json) =>
 Map<String, dynamic> _$VerificationChecksToJson(VerificationChecks instance) =>
     <String, dynamic>{
       'fssaiStructureLooksValid': instance.fssaiStructureLooksValid,
+      'licenseExpired': instance.licenseExpired,
       'otherVenuesWithSameFssai': instance.otherVenuesWithSameFssai,
     };

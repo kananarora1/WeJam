@@ -15,6 +15,7 @@ class VenueVerificationItem {
     required this.checks,
     required this.city,
     required this.fssaiNumber,
+    required this.fssaiValidUntil,
     required this.name,
     required this.ownerName,
     required this.requestedAt,
@@ -27,6 +28,7 @@ class VenueVerificationItem {
   final VerificationChecks checks;
   final String city;
   final String fssaiNumber;
+  final DateTime? fssaiValidUntil;
   final String name;
   final String? ownerName;
   final DateTime requestedAt;

@@ -10,6 +10,8 @@ enum DocumentUploadRequestType {
   fssaiCertificate('FSSAI_CERTIFICATE'),
   @JsonValue('LEASE_AGREEMENT')
   leaseAgreement('LEASE_AGREEMENT'),
+  @JsonValue('OWNER_AGREEMENT')
+  ownerAgreement('OWNER_AGREEMENT'),
   @JsonValue('ID_FRONT')
   idFront('ID_FRONT'),
   @JsonValue('ID_BACK')
