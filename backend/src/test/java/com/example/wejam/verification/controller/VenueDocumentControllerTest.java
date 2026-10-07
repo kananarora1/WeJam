@@ -135,13 +135,17 @@ class VenueDocumentControllerTest {
         String stranger = accessTokenWithRole(mvc, randomUid(), "VENUE_ADMIN");
         assertThat(startUpload(stranger, "LEASE_AGREEMENT", "application/pdf", PDF.length)).hasStatus(404);
 
-        jdbc.update("UPDATE venues SET verification_status = 'VERIFIED' WHERE id = ?", UUID.fromString(venueId));
+        jdbc.update("UPDATE venues SET verification_status = 'VERIFIED', verification_requested_at = now() "
+                + "WHERE id = ?", UUID.fromString(venueId));
         assertThat(startUpload(owner, "LEASE_AGREEMENT", "application/pdf", PDF.length)).hasStatus(409);
     }
 
     @Test
     void adminSeesDocumentsAndFlagsWhatToFixWhichResubmitClears() throws Exception {
         uploadAndConfirm("FSSAI_CERTIFICATE");
+        jdbc.update("UPDATE venues SET photo_count = 3 WHERE id = ?", UUID.fromString(venueId)); // see VenueDraftControllerTest
+        assertThat(mvc.post().uri("/api/v1/venues/{id}/submit", venueId)
+                .header(HttpHeaders.AUTHORIZATION, bearer(owner))).hasStatusOk();
         String admin = read(body(exchange(mvc, "fake:platform-admin:+919999999901")), "$.accessToken");
 
         assertThat(get("/api/v1/admin/venues/" + venueId, admin)).hasStatusOk().bodyJson().satisfies(

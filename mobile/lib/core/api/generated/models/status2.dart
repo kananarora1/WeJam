@@ -6,6 +6,8 @@ import 'package:json_annotation/json_annotation.dart';
 
 @JsonEnum()
 enum Status2 {
+  @JsonValue('DRAFT')
+  draft('DRAFT'),
   @JsonValue('PENDING')
   pending('PENDING'),
   @JsonValue('VERIFIED')

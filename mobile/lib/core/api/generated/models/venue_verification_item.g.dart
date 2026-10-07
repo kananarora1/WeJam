@@ -39,6 +39,7 @@ Map<String, dynamic> _$VenueVerificationItemToJson(
 };
 
 const _$VenueVerificationItemStatusEnumMap = {
+  VenueVerificationItemStatus.draft: 'DRAFT',
   VenueVerificationItemStatus.pending: 'PENDING',
   VenueVerificationItemStatus.verified: 'VERIFIED',
   VenueVerificationItemStatus.rejected: 'REJECTED',

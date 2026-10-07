@@ -29,6 +29,8 @@ import java.util.UUID;
 public class VenuePhotoService {
 
     public static final int MAX_PHOTOS = 10;
+    /** Design 7.1: "Photos · at least 3". Checked when the venue is submitted for review. */
+    public static final int MIN_PHOTOS_TO_SUBMIT = 3;
     static final Set<String> ALLOWED_CONTENT_TYPES = Set.of("image/jpeg", "image/png", "image/webp");
 
     private final VenuePhotoRepository photos;

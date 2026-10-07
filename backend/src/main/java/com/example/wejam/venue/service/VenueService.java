@@ -6,9 +6,10 @@ import com.example.wejam.venue.dto.VenueRequest;
 import com.example.wejam.venue.dto.VenueResponse;
 import com.example.wejam.venue.dto.VenueSummary;
 import com.example.wejam.venue.dto.VenueVerificationRow;
-import com.example.wejam.venue.exception.VerificationStateException;
+import com.example.wejam.venue.exception.IncompleteVenueException;
 import com.example.wejam.venue.exception.SpaceNotFoundException;
 import com.example.wejam.venue.exception.VenueNotFoundException;
+import com.example.wejam.venue.exception.VerificationStateException;
 import com.example.wejam.venue.model.Space;
 import com.example.wejam.venue.model.Venue;
 import com.example.wejam.venue.repository.SpaceRepository;
@@ -23,10 +24,13 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * All authorization lives here (CLAUDE.md §6): the role check for creating, and ownership checks, where a venue
@@ -95,6 +99,30 @@ public class VenueService {
     @Transactional(readOnly = true)
     public List<VenueSummary> myVenues(UUID ownerId) {
         return venueRepository.findSummariesByOwnerId(ownerId);
+    }
+
+    /** Owner: send a finished draft for review (design 7.3). 400 lists everything still missing. */
+    public VenueResponse submit(UUID ownerId, UUID venueId) {
+        Venue venue = ownedVenue(ownerId, venueId);
+        if (venue.getVerificationStatus() != VerificationStatus.DRAFT) {
+            throw VerificationStateException.notDraft();
+        }
+        Map<String, String> missing = missingLicenseDetails(venue.getFssaiNumber(), venue.getFssaiLicenseName(),
+                venue.getFssaiValidUntil());
+        if (venue.getFssaiValidUntil() != null && venue.getFssaiValidUntil().isBefore(LocalDate.now())) {
+            missing.put("fssaiValidUntil", "has passed; enter the date on your renewed license");
+        }
+        if (venue.getPhotoCount() < VenuePhotoService.MIN_PHOTOS_TO_SUBMIT) {
+            missing.put("photos", "add at least %d (you have %d)"
+                    .formatted(VenuePhotoService.MIN_PHOTOS_TO_SUBMIT, venue.getPhotoCount()));
+        }
+        if (!missing.isEmpty()) {
+            throw new IncompleteVenueException(missing);
+        }
+        if (venueRepository.submitDraft(venueId, ownerId, VenuePhotoService.MIN_PHOTOS_TO_SUBMIT) == 0) {
+            throw VerificationStateException.notDraft(); // submitted, or a photo was deleted, at the same moment
+        }
+        return get(venueId);
     }
 
     /** Owner: after fixing what the admin asked for, send a REJECTED venue back to the queue. */
@@ -194,10 +222,33 @@ public class VenueService {
     }
 
     private static void apply(Venue venue, VenueRequest request) {
+        String licenseName = blankToNull(request.fssaiLicenseName());
+        if (venue.getVerificationStatus() != VerificationStatus.DRAFT) {
+            Map<String, String> missing = missingLicenseDetails(request.fssaiNumber(), licenseName,
+                    request.fssaiValidUntil());
+            if (!missing.isEmpty()) {
+                missing.replaceAll((field, message) -> "can't be removed once submitted");
+                throw new IncompleteVenueException(missing);
+            }
+        }
         venue.updateDetails(request.name().strip(), blankToNull(request.description()),
                 request.addressLine().strip(), request.city().strip(), request.latitude(), request.longitude());
         venue.changeHostingMode(request.hostingMode());
-        venue.changeLicense(request.fssaiNumber(), request.fssaiLicenseName().strip(), request.fssaiValidUntil());
+        venue.changeLicense(request.fssaiNumber(), licenseName, request.fssaiValidUntil());
+    }
+
+    private static Map<String, String> missingLicenseDetails(String number, String licenseName, LocalDate validUntil) {
+        Map<String, String> missing = new LinkedHashMap<>();
+        if (number == null) {
+            missing.put("fssaiNumber", "is required");
+        }
+        if (licenseName == null) {
+            missing.put("fssaiLicenseName", "is required");
+        }
+        if (validUntil == null) {
+            missing.put("fssaiValidUntil", "is required");
+        }
+        return missing;
     }
 
     private static void apply(Space space, SpaceRequest request) {

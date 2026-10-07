@@ -27,6 +27,7 @@ Map<String, dynamic> _$VenueSummaryToJson(VenueSummary instance) =>
     };
 
 const _$VenueSummaryVerificationStatusEnumMap = {
+  VenueSummaryVerificationStatus.draft: 'DRAFT',
   VenueSummaryVerificationStatus.pending: 'PENDING',
   VenueSummaryVerificationStatus.verified: 'VERIFIED',
   VenueSummaryVerificationStatus.rejected: 'REJECTED',

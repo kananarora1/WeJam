@@ -9,14 +9,16 @@ part of 'venue_request.dart';
 VenueRequest _$VenueRequestFromJson(Map<String, dynamic> json) => VenueRequest(
   addressLine: json['addressLine'] as String,
   city: json['city'] as String,
-  fssaiLicenseName: json['fssaiLicenseName'] as String,
-  fssaiNumber: json['fssaiNumber'] as String,
-  fssaiValidUntil: DateTime.parse(json['fssaiValidUntil'] as String),
   hostingMode: VenueRequestHostingMode.fromJson(json['hostingMode'] as String),
   latitude: (json['latitude'] as num).toDouble(),
   longitude: (json['longitude'] as num).toDouble(),
   name: json['name'] as String,
   description: json['description'] as String?,
+  fssaiLicenseName: json['fssaiLicenseName'] as String?,
+  fssaiNumber: json['fssaiNumber'] as String?,
+  fssaiValidUntil: json['fssaiValidUntil'] == null
+      ? null
+      : DateTime.parse(json['fssaiValidUntil'] as String),
 );
 
 Map<String, dynamic> _$VenueRequestToJson(VenueRequest instance) =>
@@ -26,7 +28,7 @@ Map<String, dynamic> _$VenueRequestToJson(VenueRequest instance) =>
       'description': instance.description,
       'fssaiLicenseName': instance.fssaiLicenseName,
       'fssaiNumber': instance.fssaiNumber,
-      'fssaiValidUntil': instance.fssaiValidUntil.toIso8601String(),
+      'fssaiValidUntil': instance.fssaiValidUntil?.toIso8601String(),
       'hostingMode': _$VenueRequestHostingModeEnumMap[instance.hostingMode]!,
       'latitude': instance.latitude,
       'longitude': instance.longitude,

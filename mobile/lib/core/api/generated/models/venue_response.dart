@@ -39,11 +39,13 @@ class VenueResponse {
   final String city;
   final String? description;
 
-  /// Null only for venues created before this field existed
+  /// Null while a draft
   final String? fssaiLicenseName;
-  final String fssaiNumber;
 
-  /// Null only for venues created before this field existed
+  /// Null while a draft
+  final String? fssaiNumber;
+
+  /// Null while a draft
   final DateTime? fssaiValidUntil;
   final VenueResponseHostingMode hostingMode;
   final String id;

@@ -77,4 +77,16 @@ public interface VenueRepository extends JpaRepository<Venue, UUID> {
             WHERE id = :venueId AND owner_id = :ownerId AND verification_status = 'REJECTED'
             """, nativeQuery = true)
     int resubmitRejected(UUID venueId, UUID ownerId);
+
+    /**
+     * DRAFT → PENDING. The photo minimum is part of the condition, so a photo deleted between the service's
+     * checks and this write can't slip an incomplete venue into the queue.
+     */
+    @Modifying(clearAutomatically = true)
+    @Query(value = """
+            UPDATE venues SET verification_status = 'PENDING', verification_requested_at = now()
+            WHERE id = :venueId AND owner_id = :ownerId AND verification_status = 'DRAFT'
+              AND photo_count >= :minPhotos
+            """, nativeQuery = true)
+    int submitDraft(UUID venueId, UUID ownerId, int minPhotos);
 }

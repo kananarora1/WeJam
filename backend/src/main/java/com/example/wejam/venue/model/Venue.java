@@ -18,6 +18,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 /**
@@ -63,7 +64,7 @@ public class Venue {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "verification_status")
-    private VerificationStatus verificationStatus = VerificationStatus.PENDING;
+    private VerificationStatus verificationStatus = VerificationStatus.DRAFT;
 
     @Column(name = "rejection_reason")
     private String rejectionReason;
@@ -114,13 +115,16 @@ public class Venue {
      * them — a renewal included — needs verifying again.
      */
     public void changeLicense(String fssaiNumber, String licenseName, LocalDate validUntil) {
-        if (fssaiNumber.equals(this.fssaiNumber) && licenseName.equals(this.fssaiLicenseName)
-                && validUntil.equals(this.fssaiValidUntil)) {
+        if (Objects.equals(fssaiNumber, this.fssaiNumber) && Objects.equals(licenseName, this.fssaiLicenseName)
+                && Objects.equals(validUntil, this.fssaiValidUntil)) {
             return;
         }
         this.fssaiNumber = fssaiNumber;
         this.fssaiLicenseName = licenseName;
         this.fssaiValidUntil = validUntil;
+        if (verificationStatus == VerificationStatus.DRAFT) {
+            return; // nothing has been reviewed yet, so there's nothing to reset
+        }
         this.verificationStatus = VerificationStatus.PENDING;
         this.rejectionReason = null;
         this.verificationIssues = new String[0];
@@ -133,6 +137,10 @@ public class Venue {
 
     public LocalDate getFssaiValidUntil() {
         return fssaiValidUntil;
+    }
+
+    public int getPhotoCount() {
+        return photoCount;
     }
 
     public UUID getId() {

@@ -1,7 +1,11 @@
 package com.example.wejam.venue.model;
 
-/** Set by the platform admin (step 5); never by the venue admin. */
+/**
+ * DRAFT → PENDING when the owner submits; PENDING → VERIFIED | REJECTED by a platform admin; REJECTED → PENDING
+ * when the owner resubmits. A venue admin never sets VERIFIED or REJECTED.
+ */
 public enum VerificationStatus {
+    DRAFT,
     PENDING,
     VERIFIED,
     REJECTED

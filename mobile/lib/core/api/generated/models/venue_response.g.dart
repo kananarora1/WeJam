@@ -12,7 +12,7 @@ VenueResponse _$VenueResponseFromJson(Map<String, dynamic> json) =>
       city: json['city'] as String,
       description: json['description'] as String?,
       fssaiLicenseName: json['fssaiLicenseName'] as String?,
-      fssaiNumber: json['fssaiNumber'] as String,
+      fssaiNumber: json['fssaiNumber'] as String?,
       fssaiValidUntil: json['fssaiValidUntil'] == null
           ? null
           : DateTime.parse(json['fssaiValidUntil'] as String),
@@ -78,6 +78,7 @@ const _$VenueResponseVerificationIssuesEnumMap = {
 };
 
 const _$VenueResponseVerificationStatusEnumMap = {
+  VenueResponseVerificationStatus.draft: 'DRAFT',
   VenueResponseVerificationStatus.pending: 'PENDING',
   VenueResponseVerificationStatus.verified: 'VERIFIED',
   VenueResponseVerificationStatus.rejected: 'REJECTED',

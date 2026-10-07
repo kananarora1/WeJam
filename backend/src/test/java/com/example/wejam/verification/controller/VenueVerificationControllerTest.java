@@ -68,7 +68,7 @@ class VenueVerificationControllerTest {
         createVenue(accessTokenWithRole(mvc, randomUid(), "VENUE_ADMIN"), fssai); // a duplicate of `first`
         // Expired since it was submitted (the API itself refuses a past date).
         jdbc.update("UPDATE venues SET fssai_valid_until = DATE '2020-01-31' WHERE id = ?", UUID.fromString(second));
-        jdbc.update("UPDATE venues SET photo_count = 3 WHERE id = ?", UUID.fromString(first));
+        jdbc.update("UPDATE venues SET photo_count = 5 WHERE id = ?", UUID.fromString(first));
 
         MvcTestResult queue = get("/api/v1/admin/venue-verifications", admin);
 
@@ -85,9 +85,9 @@ class VenueVerificationControllerTest {
                 json -> json.assertThat().extractingPath("$[?(@.venueId=='" + first + "')].checks.licenseExpired")
                         .asArray().containsExactly(false),
                 json -> json.assertThat().extractingPath("$[?(@.venueId=='" + first + "')].photoCount")
-                        .asArray().containsExactly(3),
+                        .asArray().containsExactly(5),
                 json -> json.assertThat().extractingPath("$[?(@.venueId=='" + second + "')].photoCount")
-                        .asArray().containsExactly(0),
+                        .asArray().containsExactly(3),
                 json -> json.assertThat().extractingPath("$[?(@.venueId=='" + second + "')].checks.fssaiStructureLooksValid")
                         .asArray().containsExactly(false),
                 json -> json.assertThat().extractingPath("$[?(@.venueId=='" + second + "')].checks.licenseExpired")
@@ -209,6 +209,7 @@ class VenueVerificationControllerTest {
                  "hostingMode":"OPEN"}
                 """.formatted(fssai));
         assertThat(result).hasStatus(201);
+        submit(read(body(result), "$.id"), token);
         return read(body(result), "$.id");
     }
 
@@ -225,5 +226,11 @@ class VenueVerificationControllerTest {
     private MvcTestResult send(MockMvcTester.MockMvcRequestBuilder request, String token, String json) {
         return request.header(HttpHeaders.AUTHORIZATION, bearer(token))
                 .contentType(MediaType.APPLICATION_JSON).content(json).exchange();
+    }
+
+    /** Into the review queue. Photos are counted, not uploaded: VenueDraftControllerTest covers real uploads. */
+    private void submit(String venueId, String token) {
+        jdbc.update("UPDATE venues SET photo_count = 3 WHERE id = ?", UUID.fromString(venueId));
+        assertThat(send(mvc.post().uri("/api/v1/venues/{id}/submit", venueId), token, "")).hasStatusOk();
     }
 }

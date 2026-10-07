@@ -111,4 +111,9 @@ abstract class VenuesClient {
     @Path('spaceId') required String spaceId,
     @Body() required SpaceRequest body,
   });
+
+  @POST('/api/v1/venues/{venueId}/submit')
+  Future<VenueResponse> submitVenue({
+    @Path('venueId') required String venueId,
+  });
 }

@@ -133,6 +133,7 @@ paths:
           type: string
           default: PENDING
           enum:
+          - DRAFT
           - PENDING
           - VERIFIED
           - REJECTED
@@ -853,6 +854,25 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/SpaceResponse"
+          description: OK
+      tags:
+      - Venues
+  /api/v1/venues/{venueId}/submit:
+    post:
+      operationId: submitVenue
+      parameters:
+      - in: path
+        name: venueId
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VenueResponse"
           description: OK
       tags:
       - Venues
@@ -1651,10 +1671,12 @@ components:
           example: Amber Hospitality LLP
           maxLength: 120
           minLength: 0
+          nullable: true
         fssaiNumber:
           type: string
           description: FSSAI license number. Changing it resets verification to PENDING.
           example: "12345678901234"
+          nullable: true
           pattern: "\\d{14}"
         fssaiValidUntil:
           type: string
@@ -1662,6 +1684,7 @@ components:
           description: Expiry date on the license; can't be in the past. Changing
             it (e.g. a renewal) resets verification to PENDING.
           example: 2028-03-31
+          nullable: true
         hostingMode:
           type: string
           enum:
@@ -1691,9 +1714,6 @@ components:
       required:
       - addressLine
       - city
-      - fssaiLicenseName
-      - fssaiNumber
-      - fssaiValidUntil
       - hostingMode
       - latitude
       - longitude
@@ -1710,14 +1730,16 @@ components:
           nullable: true
         fssaiLicenseName:
           type: string
-          description: Null only for venues created before this field existed
+          description: Null while a draft
           nullable: true
         fssaiNumber:
           type: string
+          description: Null while a draft
+          nullable: true
         fssaiValidUntil:
           type: string
           format: date
-          description: Null only for venues created before this field existed
+          description: Null while a draft
           nullable: true
         hostingMode:
           type: string
@@ -1763,6 +1785,7 @@ components:
         verificationStatus:
           type: string
           enum:
+          - DRAFT
           - PENDING
           - VERIFIED
           - REJECTED
@@ -1823,6 +1846,7 @@ components:
         verificationStatus:
           type: string
           enum:
+          - DRAFT
           - PENDING
           - VERIFIED
           - REJECTED
@@ -1860,6 +1884,7 @@ components:
         status:
           type: string
           enum:
+          - DRAFT
           - PENDING
           - VERIFIED
           - REJECTED

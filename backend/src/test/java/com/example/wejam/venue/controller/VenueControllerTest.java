@@ -85,7 +85,8 @@ class VenueControllerTest {
 
         // Hidden while pending, and a rejection (with its reason) stays between the venue and the reviewers.
         assertThat(get("/api/v1/venues/" + venueId, reader)).hasStatus(404);
-        jdbc.update("UPDATE venues SET verification_status = 'REJECTED', rejection_reason = 'Blurry license' "
+        jdbc.update("UPDATE venues SET verification_status = 'REJECTED', rejection_reason = 'Blurry license', "
+                + "verification_requested_at = now() "
                 + "WHERE id = ?", UUID.fromString(venueId));
         assertThat(get("/api/v1/venues/" + venueId, reader)).hasStatus(404);
 
@@ -215,7 +216,7 @@ class VenueControllerTest {
     }
 
     @Test
-    void newVenueStartsPendingWithItsHostingMode() {
+    void newVenueStartsAsADraftWithItsHostingMode() {
         String venueId = createVenue(admin);
 
         assertThat(get("/api/v1/venues/" + venueId, admin))
@@ -224,7 +225,7 @@ class VenueControllerTest {
                 .satisfies(
                         json -> json.assertThat().extractingPath("$.fssaiNumber").isEqualTo(FSSAI),
                         json -> json.assertThat().extractingPath("$.hostingMode").isEqualTo("OPEN"),
-                        json -> json.assertThat().extractingPath("$.verificationStatus").isEqualTo("PENDING"),
+                        json -> json.assertThat().extractingPath("$.verificationStatus").isEqualTo("DRAFT"),
                         json -> json.assertThat().extractingPath("$.rejectionReason").isNull());
     }
 
@@ -252,16 +253,11 @@ class VenueControllerTest {
     }
 
     @Test
-    void licenseNameAndExpiryAreRequiredAndTheLicenseMustNotHaveExpired() {
-        assertThat(send(mvc.post().uri("/api/v1/venues"), admin,
-                VENUE.replace("\"fssaiLicenseName\":\"Amber Hospitality LLP\",", "")))
-                .hasStatus(400).bodyJson().extractingPath("$.errors.fssaiLicenseName").isNotNull();
+    void licenseDetailsAreValidatedWhenGiven() {
+        // Leaving them out is fine on a draft (VenueDraftControllerTest); bad values never are.
         assertThat(send(mvc.post().uri("/api/v1/venues"), admin, VENUE.replace("Amber Hospitality LLP", "x".repeat(121))))
                 .hasStatus(400).bodyJson().extractingPath("$.errors.fssaiLicenseName").isNotNull();
         assertThat(send(mvc.post().uri("/api/v1/venues"), admin, VENUE.replace("2030-03-31", "2020-03-31")))
-                .hasStatus(400).bodyJson().extractingPath("$.errors.fssaiValidUntil").isNotNull();
-        assertThat(send(mvc.post().uri("/api/v1/venues"), admin,
-                VENUE.replace("\"fssaiValidUntil\":\"2030-03-31\",", "")))
                 .hasStatus(400).bodyJson().extractingPath("$.errors.fssaiValidUntil").isNotNull();
     }
 
@@ -293,12 +289,18 @@ class VenueControllerTest {
                 VENUE.replace("\"name\":", "\"verificationStatus\":\"VERIFIED\",\"name\":"));
 
         assertThat(result).hasStatus(201)
-                .bodyJson().extractingPath("$.verificationStatus").isEqualTo("PENDING");
+                .bodyJson().extractingPath("$.verificationStatus").isEqualTo("DRAFT");
     }
 
     @Test
     void changingAnyLicenseDetailResetsVerificationButOtherEditsDoNot() {
         String venueId = createVenue(admin);
+        // A draft hasn't been reviewed, so editing its license keeps it a draft.
+        assertThat(send(mvc.put().uri("/api/v1/venues/{id}", venueId), admin,
+                VENUE.replace("Amber Hospitality LLP", "Amber Foods Pvt Ltd")))
+                .hasStatusOk()
+                .bodyJson().extractingPath("$.verificationStatus").isEqualTo("DRAFT");
+        send(mvc.put().uri("/api/v1/venues/{id}", venueId), admin, VENUE);
         markVerified(venueId);
 
         assertThat(send(mvc.put().uri("/api/v1/venues/{id}", venueId), admin,
@@ -317,7 +319,8 @@ class VenueControllerTest {
             send(mvc.put().uri("/api/v1/venues/{id}", venueId), admin, VENUE);
         }
 
-        jdbc.update("UPDATE venues SET verification_status = 'REJECTED', rejection_reason = 'Blurry license' "
+        jdbc.update("UPDATE venues SET verification_status = 'REJECTED', rejection_reason = 'Blurry license', "
+                + "verification_requested_at = now() "
                 + "WHERE id = ?", UUID.fromString(venueId));
         assertThat(send(mvc.put().uri("/api/v1/venues/{id}", venueId), admin,
                 VENUE.replace(FSSAI, "99999999999999")))
@@ -367,7 +370,8 @@ class VenueControllerTest {
     }
 
     private void markVerified(String venueId) {
-        jdbc.update("UPDATE venues SET verification_status = 'VERIFIED' WHERE id = ?", UUID.fromString(venueId));
+        jdbc.update("UPDATE venues SET verification_status = 'VERIFIED', verification_requested_at = now() "
+                + "WHERE id = ?", UUID.fromString(venueId));
     }
 
     private String createVenue(String token) {

@@ -12,7 +12,10 @@ import jakarta.validation.constraints.Size;
 
 import java.time.LocalDate;
 
-/** Full replacement on PUT, creation on POST. Verification status is never taken from a request. */
+/**
+ * Full replacement on PUT, creation on POST. New venues are drafts: the license fields may be left out until the
+ * owner submits for review, and can't be removed after that. Verification status is never taken from a request.
+ */
 public record VenueRequest(
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED, example = "Amber Room")
         @NotBlank @Size(max = 80) String name,
@@ -26,16 +29,16 @@ public record VenueRequest(
         @NotNull @DecimalMin("-90") @DecimalMax("90") Double latitude,
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED, example = "77.6408")
         @NotNull @DecimalMin("-180") @DecimalMax("180") Double longitude,
-        @Schema(requiredMode = Schema.RequiredMode.REQUIRED, example = "12345678901234",
+        @Schema(nullable = true, example = "12345678901234",
                 description = "FSSAI license number. Changing it resets verification to PENDING.")
-        @NotNull @Pattern(regexp = "\\d{14}", message = "must be the 14-digit FSSAI license number") String fssaiNumber,
-        @Schema(requiredMode = Schema.RequiredMode.REQUIRED, example = "Amber Hospitality LLP",
+        @Pattern(regexp = "\\d{14}", message = "must be the 14-digit FSSAI license number") String fssaiNumber,
+        @Schema(nullable = true, example = "Amber Hospitality LLP",
                 description = "Business name printed on the license. Changing it resets verification to PENDING.")
-        @NotBlank @Size(max = 120) String fssaiLicenseName,
-        @Schema(requiredMode = Schema.RequiredMode.REQUIRED, example = "2028-03-31",
+        @Size(max = 120) String fssaiLicenseName,
+        @Schema(nullable = true, example = "2028-03-31",
                 description = "Expiry date on the license; can't be in the past. Changing it (e.g. a renewal) "
                         + "resets verification to PENDING.")
-        @NotNull @FutureOrPresent LocalDate fssaiValidUntil,
+        @FutureOrPresent LocalDate fssaiValidUntil,
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
         @NotNull HostingMode hostingMode) {
 }

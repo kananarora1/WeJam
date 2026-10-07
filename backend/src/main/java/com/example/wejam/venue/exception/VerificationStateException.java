@@ -15,6 +15,10 @@ public class VerificationStateException extends ErrorResponseException {
         return new VerificationStateException("This venue is not waiting for review (it may already have been decided)");
     }
 
+    public static VerificationStateException notDraft() {
+        return new VerificationStateException("This venue has already been submitted for review");
+    }
+
     public static VerificationStateException notRejected() {
         return new VerificationStateException("Only a venue that was not verified can be resubmitted");
     }

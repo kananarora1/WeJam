@@ -155,7 +155,8 @@ class VenuePhotoControllerTest {
 
     @Test
     void photosCanChangeAfterVerificationWithoutAffectingIt() throws Exception {
-        jdbc.update("UPDATE venues SET verification_status = 'VERIFIED' WHERE id = ?", UUID.fromString(venueId));
+        jdbc.update("UPDATE venues SET verification_status = 'VERIFIED', verification_requested_at = now() "
+                + "WHERE id = ?", UUID.fromString(venueId));
 
         String photoId = read(body(uploadPhoto()), "$.id");
         assertThat(delete(photoId)).hasStatus(204);

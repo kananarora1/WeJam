@@ -18,12 +18,13 @@ public record VenueResponse(
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED) String city,
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED) double latitude,
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED) double longitude,
-        @Schema(requiredMode = Schema.RequiredMode.REQUIRED) String fssaiNumber,
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED, nullable = true, description = "Null while a draft")
+        String fssaiNumber,
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED, nullable = true,
-                description = "Null only for venues created before this field existed")
+                description = "Null while a draft")
         String fssaiLicenseName,
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED, nullable = true,
-                description = "Null only for venues created before this field existed")
+                description = "Null while a draft")
         LocalDate fssaiValidUntil,
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED) HostingMode hostingMode,
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED) VerificationStatus verificationStatus,
