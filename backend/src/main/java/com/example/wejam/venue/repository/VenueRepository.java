@@ -17,6 +17,18 @@ public interface VenueRepository extends JpaRepository<Venue, UUID> {
 
     Optional<Venue> findByIdAndOwnerId(UUID id, UUID ownerId);
 
+    boolean existsByIdAndOwnerId(UUID id, UUID ownerId);
+
+    /** Atomic photo cap: 0 = the venue already has {@code max} photos. Never count-then-insert. */
+    @Modifying
+    @Query(value = "UPDATE venues SET photo_count = photo_count + 1 WHERE id = :venueId AND photo_count < :max",
+            nativeQuery = true)
+    int reservePhotoSlot(UUID venueId, int max);
+
+    @Modifying
+    @Query(value = "UPDATE venues SET photo_count = photo_count - 1 WHERE id = :venueId", nativeQuery = true)
+    int releasePhotoSlot(UUID venueId);
+
     /** One query with a space count per venue (DTO projection, no entities loaded). */
     @Query("""
             SELECT new com.example.wejam.venue.dto.VenueSummary(v.id, v.name, v.city, v.verificationStatus, COUNT(s))
@@ -30,8 +42,8 @@ public interface VenueRepository extends JpaRepository<Venue, UUID> {
     /** Review queue with the duplicate-FSSAI check computed in the same query. */
     @Query("""
             SELECT new com.example.wejam.venue.dto.VenueVerificationRow(
-                v.id, v.name, v.city, v.ownerId, v.fssaiNumber, v.fssaiValidUntil, v.verificationStatus,
-                v.verificationRequestedAt,
+                v.id, v.name, v.city, v.ownerId, v.fssaiNumber, v.fssaiValidUntil, v.photoCount,
+                v.verificationStatus, v.verificationRequestedAt,
                 (SELECT COUNT(o) FROM Venue o WHERE o.fssaiNumber = v.fssaiNumber AND o.id <> v.id))
             FROM Venue v
             WHERE v.verificationStatus = :status

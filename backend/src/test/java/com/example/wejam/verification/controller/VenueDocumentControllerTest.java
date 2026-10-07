@@ -1,6 +1,7 @@
 package com.example.wejam.verification.controller;
 
 import com.example.wejam.IntegrationTest;
+import com.example.wejam.common.storage.Bucket;
 import com.example.wejam.common.storage.ObjectStorage;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -102,8 +103,8 @@ class VenueDocumentControllerTest {
 
         assertThat(get("/api/v1/venues/" + venueId + "/documents", owner)).hasStatusOk()
                 .bodyJson().extractingPath("$.length()").isEqualTo(1);
-        assertThat(storage.head(firstKey)).isEmpty();
-        assertThat(storage.head(secondKey)).isPresent();
+        assertThat(storage.head(Bucket.PRIVATE, firstKey)).isEmpty();
+        assertThat(storage.head(Bucket.PRIVATE, secondKey)).isPresent();
     }
 
     @Test
@@ -124,7 +125,7 @@ class VenueDocumentControllerTest {
         assertThat(mvc.delete().uri("/api/v1/venues/{v}/documents/{d}", venueId, id)
                 .header(HttpHeaders.AUTHORIZATION, bearer(owner))).hasStatus(204);
 
-        assertThat(storage.head(key)).isEmpty();
+        assertThat(storage.head(Bucket.PRIVATE, key)).isEmpty();
         assertThat(get("/api/v1/venues/" + venueId + "/documents", owner)).bodyJson()
                 .extractingPath("$.length()").isEqualTo(0);
     }
@@ -149,10 +150,11 @@ class VenueDocumentControllerTest {
 
         assertThat(mvc.post().uri("/api/v1/admin/venues/{id}/reject", venueId)
                 .header(HttpHeaders.AUTHORIZATION, bearer(admin)).contentType(MediaType.APPLICATION_JSON)
-                .content("{\"reason\":\"Certificate photo is blurry\",\"issues\":[\"FSSAI_CERTIFICATE\",\"FSSAI_NUMBER\"]}"))
+                .content("{\"reason\":\"Certificate photo is blurry\",\"issues\":[\"PHOTOS\",\"FSSAI_CERTIFICATE\",\"FSSAI_NUMBER\"]}"))
                 .hasStatusOk();
         assertThat(get("/api/v1/venues/" + venueId, owner)).bodyJson()
-                .extractingPath("$.verificationIssues").asArray().containsExactly("FSSAI_NUMBER", "FSSAI_CERTIFICATE");
+                .extractingPath("$.verificationIssues").asArray()
+                .containsExactly("FSSAI_NUMBER", "FSSAI_CERTIFICATE", "PHOTOS");
 
         mvc.post().uri("/api/v1/venues/{id}/resubmit", venueId).header(HttpHeaders.AUTHORIZATION, bearer(owner)).exchange();
         assertThat(get("/api/v1/venues/" + venueId, owner)).bodyJson()
@@ -167,7 +169,7 @@ class VenueDocumentControllerTest {
 
         assertThat(jdbc.queryForObject("SELECT count(*) FROM verification_documents WHERE owner_id = ?",
                 Integer.class, UUID.fromString(venueId))).isZero();
-        assertThat(storage.head(key)).isEmpty();
+        assertThat(storage.head(Bucket.PRIVATE, key)).isEmpty();
     }
 
     // --- helpers

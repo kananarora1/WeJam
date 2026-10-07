@@ -5,5 +5,6 @@ public enum VerificationIssue {
     FSSAI_NUMBER,
     FSSAI_CERTIFICATE,
     LEASE_AGREEMENT,
-    VENUE_DETAILS
+    VENUE_DETAILS,
+    PHOTOS
 }

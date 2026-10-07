@@ -26,6 +26,11 @@ public class TestcontainersConfiguration {
     private static final DockerImageName MINIO_IMAGE =
             DockerImageName.parse("cgr.dev/chainguard/minio:latest").asCompatibleSubstituteFor("minio/minio");
     private static final String PRIVATE_BUCKET = "wejam-private";
+    private static final String PUBLIC_BUCKET = "wejam-public";
+    /** Same as infra/docker-compose.yml: anyone can read a file by URL, nobody can list the bucket. */
+    private static final String PUBLIC_READ_POLICY = """
+            {"Version":"2012-10-17","Statement":[{"Effect":"Allow","Principal":{"AWS":["*"]},
+             "Action":["s3:GetObject"],"Resource":["arn:aws:s3:::%s/*"]}]}""".formatted(PUBLIC_BUCKET);
 
     @Bean
     @ServiceConnection
@@ -52,6 +57,8 @@ public class TestcontainersConfiguration {
                 .forcePathStyle(true)
                 .build()) {
             s3.createBucket(b -> b.bucket(PRIVATE_BUCKET));
+            s3.createBucket(b -> b.bucket(PUBLIC_BUCKET));
+            s3.putBucketPolicy(b -> b.bucket(PUBLIC_BUCKET).policy(PUBLIC_READ_POLICY));
         }
         return minio;
     }
@@ -65,6 +72,7 @@ public class TestcontainersConfiguration {
             registry.add("wejam.storage.access-key", minio::getUserName);
             registry.add("wejam.storage.secret-key", minio::getPassword);
             registry.add("wejam.storage.private-bucket", () -> PRIVATE_BUCKET);
+            registry.add("wejam.storage.public-bucket", () -> PUBLIC_BUCKET);
         };
     }
 }

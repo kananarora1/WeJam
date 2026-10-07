@@ -690,6 +690,77 @@ paths:
           description: OK
       tags:
       - Venues
+  /api/v1/venues/{venueId}/photos:
+    post:
+      operationId: startVenuePhotoUpload
+      parameters:
+      - in: path
+        name: venueId
+        required: true
+        schema:
+          type: string
+          format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PhotoUploadRequest"
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PhotoUploadResponse"
+          description: Created
+      tags:
+      - Venues
+  /api/v1/venues/{venueId}/photos/{photoId}:
+    delete:
+      operationId: deleteVenuePhoto
+      parameters:
+      - in: path
+        name: venueId
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - in: path
+        name: photoId
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "204":
+          description: No Content
+      tags:
+      - Venues
+  /api/v1/venues/{venueId}/photos/{photoId}/confirm:
+    post:
+      operationId: confirmVenuePhoto
+      parameters:
+      - in: path
+        name: venueId
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - in: path
+        name: photoId
+        required: true
+        schema:
+          type: string
+          format: uuid
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VenuePhotoDto"
+          description: OK
+      tags:
+      - Venues
   /api/v1/venues/{venueId}/resubmit:
     post:
       operationId: resubmitVenue
@@ -1362,6 +1433,48 @@ components:
       - invitedAt
       - maskedPhone
       - userId
+    PhotoUploadRequest:
+      type: object
+      properties:
+        contentType:
+          type: string
+          description: "image/jpeg, image/png or image/webp"
+          example: image/jpeg
+          minLength: 1
+        sizeBytes:
+          type: integer
+          format: int64
+          description: Exact file size; max 5 MB (compress on the phone first)
+          example: 843211
+          maximum: 5242880
+          minimum: 1
+      required:
+      - contentType
+      - sizeBytes
+    PhotoUploadResponse:
+      type: object
+      properties:
+        expiresAt:
+          type: string
+          format: date-time
+        headers:
+          type: object
+          additionalProperties:
+            type: string
+        method:
+          type: string
+          example: PUT
+        photoId:
+          type: string
+          format: uuid
+        uploadUrl:
+          type: string
+      required:
+      - expiresAt
+      - headers
+      - method
+      - photoId
+      - uploadUrl
     RejectHostVerificationRequest:
       type: object
       properties:
@@ -1388,6 +1501,7 @@ components:
             - FSSAI_CERTIFICATE
             - LEASE_AGREEMENT
             - VENUE_DETAILS
+            - PHOTOS
             nullable: true
           nullable: true
           uniqueItems: true
@@ -1499,6 +1613,19 @@ components:
           minLength: 0
       required:
       - displayName
+    VenuePhotoDto:
+      type: object
+      description: "Upload order; the first is the cover. Public URLs, safe to cache."
+      properties:
+        id:
+          type: string
+          format: uuid
+        url:
+          type: string
+          description: Permanent public URL; safe to cache
+      required:
+      - id
+      - url
     VenueRequest:
       type: object
       properties:
@@ -1608,6 +1735,12 @@ components:
           format: double
         name:
           type: string
+        photos:
+          type: array
+          description: "Upload order; the first is the cover. Public URLs, safe to\
+            \ cache."
+          items:
+            $ref: "#/components/schemas/VenuePhotoDto"
         rejectionReason:
           type: string
           nullable: true
@@ -1626,6 +1759,7 @@ components:
             - FSSAI_CERTIFICATE
             - LEASE_AGREEMENT
             - VENUE_DETAILS
+            - PHOTOS
         verificationStatus:
           type: string
           enum:
@@ -1644,6 +1778,7 @@ components:
       - latitude
       - longitude
       - name
+      - photos
       - rejectionReason
       - spaces
       - verificationIssues
@@ -1715,6 +1850,10 @@ components:
         ownerName:
           type: string
           nullable: true
+        photoCount:
+          type: integer
+          format: int32
+          description: Design asks venues for at least 3
         requestedAt:
           type: string
           format: date-time
@@ -1734,6 +1873,7 @@ components:
       - fssaiValidUntil
       - name
       - ownerName
+      - photoCount
       - requestedAt
       - status
       - venueId

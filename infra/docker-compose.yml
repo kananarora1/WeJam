@@ -55,6 +55,11 @@ services:
         until mc alias set local http://minio:9000 "$$MINIO_ROOT_USER" "$$MINIO_ROOT_PASSWORD" >/dev/null 2>&1; do sleep 1; done
         mc mb --ignore-existing local/wejam-private
         mc anonymous set none local/wejam-private
+        # Public media (venue photos): anyone with a file's URL can read it, but nobody can list the bucket.
+        # (mc's built-in "download" policy would also allow listing.)
+        mc mb --ignore-existing local/wejam-public
+        printf '%s' '{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Principal":{"AWS":["*"]},"Action":["s3:GetObject"],"Resource":["arn:aws:s3:::wejam-public/*"]}]}' > /tmp/public-read.json
+        mc anonymous set-json /tmp/public-read.json local/wejam-public
     environment:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER:-wejam}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-wejam-dev-secret}

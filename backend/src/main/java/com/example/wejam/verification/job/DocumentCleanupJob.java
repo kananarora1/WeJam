@@ -1,7 +1,8 @@
 package com.example.wejam.verification.job;
 
+import com.example.wejam.common.storage.Bucket;
 import com.example.wejam.common.storage.ObjectStorage;
-import com.example.wejam.verification.config.VerificationProperties;
+import com.example.wejam.common.storage.StorageProperties;
 import com.example.wejam.verification.model.VerificationDocument;
 import com.example.wejam.verification.repository.VerificationDocumentRepository;
 import org.slf4j.Logger;
@@ -30,10 +31,10 @@ public class DocumentCleanupJob {
     private final VerificationDocumentRepository documents;
     private final ObjectStorage storage;
     private final TransactionTemplate transaction;
-    private final VerificationProperties properties;
+    private final StorageProperties properties;
 
     public DocumentCleanupJob(VerificationDocumentRepository documents, ObjectStorage storage,
-                              TransactionTemplate transaction, VerificationProperties properties) {
+                              TransactionTemplate transaction, StorageProperties properties) {
         this.documents = documents;
         this.storage = storage;
         this.transaction = transaction;
@@ -41,7 +42,7 @@ public class DocumentCleanupJob {
     }
 
     /** Returns how many documents were deleted. Safe to run anywhere, any number of times, concurrently. */
-    @Scheduled(fixedDelayString = "${wejam.verification.cleanup-interval}", initialDelayString = "1m")
+    @Scheduled(fixedDelayString = "${wejam.jobs.cleanup-interval}", initialDelayString = "1m")
     public int run() {
         int total = 0;
         int deleted;
@@ -60,7 +61,7 @@ public class DocumentCleanupJob {
         Instant now = Instant.now();
         List<VerificationDocument> due = documents.lockDueForDeletion(now,
                 now.minus(properties.abandonedUploadAge()), BATCH_SIZE);
-        due.forEach(d -> storage.delete(d.getStorageKey()));
+        due.forEach(d -> storage.delete(Bucket.PRIVATE, d.getStorageKey()));
         documents.deleteAllInBatch(due);
         return due.size();
     }

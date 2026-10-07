@@ -19,7 +19,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-/** Private-bucket operations. File bytes never pass through the backend: apps use presigned URLs. */
+/** File bytes never pass through the backend: apps upload with presigned URLs and read with links we build. */
 @Service
 public class ObjectStorage {
 
@@ -34,9 +34,9 @@ public class ObjectStorage {
     }
 
     /** Content-Type and Content-Length are part of the signature, so storage rejects any other file. */
-    public PresignedUpload presignUpload(String key, String contentType, long contentLength) {
+    public PresignedUpload presignUpload(Bucket bucket, String key, String contentType, long contentLength) {
         PutObjectRequest put = PutObjectRequest.builder()
-                .bucket(properties.privateBucket())
+                .bucket(properties.bucketName(bucket))
                 .key(key)
                 .contentType(contentType)
                 .contentLength(contentLength)
@@ -50,6 +50,7 @@ public class ObjectStorage {
         return new PresignedUpload(presigned.url().toString(), headers, presigned.expiration());
     }
 
+    /** A 5-minute link to a private file. */
     public String presignDownload(String key) {
         GetObjectRequest get = GetObjectRequest.builder().bucket(properties.privateBucket()).key(key).build();
         return presigner.presignGetObject(p -> p.signatureDuration(properties.downloadUrlTtl()).getObjectRequest(get))
@@ -60,10 +61,15 @@ public class ObjectStorage {
         return Instant.now().plus(properties.downloadUrlTtl());
     }
 
-    public Optional<StoredObject> head(String key) {
+    /** A permanent link to a public file. Built, not stored, so moving to a CDN changes no data. */
+    public String publicUrl(String key) {
+        return properties.publicFilesUrl() + "/" + key;
+    }
+
+    public Optional<StoredObject> head(Bucket bucket, String key) {
         try {
             HeadObjectResponse head = s3.headObject(HeadObjectRequest.builder()
-                    .bucket(properties.privateBucket()).key(key).build());
+                    .bucket(properties.bucketName(bucket)).key(key).build());
             return Optional.of(new StoredObject(head.contentLength(), head.contentType()));
         } catch (NoSuchKeyException e) {
             return Optional.empty();
@@ -75,23 +81,23 @@ public class ObjectStorage {
         }
     }
 
-    public void delete(String key) {
-        s3.deleteObject(DeleteObjectRequest.builder().bucket(properties.privateBucket()).key(key).build());
+    public void delete(Bucket bucket, String key) {
+        s3.deleteObject(DeleteObjectRequest.builder().bucket(properties.bucketName(bucket)).key(key).build());
     }
 
     /**
      * Delete the object only once the surrounding DB transaction has committed: if the transaction rolled back
      * after the object was gone, a row would point at nothing. Outside a transaction, deletes immediately.
      */
-    public void deleteAfterCommit(String key) {
+    public void deleteAfterCommit(Bucket bucket, String key) {
         if (!TransactionSynchronizationManager.isSynchronizationActive()) {
-            delete(key);
+            delete(bucket, key);
             return;
         }
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
             @Override
             public void afterCommit() {
-                delete(key);
+                delete(bucket, key);
             }
         });
     }

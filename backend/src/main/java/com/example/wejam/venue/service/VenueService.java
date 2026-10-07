@@ -38,12 +38,14 @@ public class VenueService {
 
     private final VenueRepository venueRepository;
     private final SpaceRepository spaceRepository;
+    private final VenuePhotoService photoService;
     private final ApplicationEventPublisher events;
 
     public VenueService(VenueRepository venueRepository, SpaceRepository spaceRepository,
-                        ApplicationEventPublisher events) {
+                        VenuePhotoService photoService, ApplicationEventPublisher events) {
         this.venueRepository = venueRepository;
         this.spaceRepository = spaceRepository;
+        this.photoService = photoService;
         this.events = events;
     }
 
@@ -51,7 +53,7 @@ public class VenueService {
     public VenueResponse create(UUID ownerId, VenueRequest request) {
         Venue venue = new Venue(ownerId);
         apply(venue, request);
-        return VenueResponse.from(venueRepository.save(venue), List.of());
+        return VenueResponse.from(venueRepository.save(venue), List.of(), List.of());
     }
 
     /** What a user may see: their own venues in any state; others' only once verified (hidden until then). */
@@ -76,9 +78,11 @@ public class VenueService {
         return withSpaces(venue);
     }
 
-    /** Its spaces go with it (ON DELETE CASCADE). */
+    /** Its spaces go with it (ON DELETE CASCADE); photo files after commit; other modules via the event. */
     public void delete(UUID ownerId, UUID venueId) {
-        venueRepository.delete(ownedVenue(ownerId, venueId));
+        Venue venue = ownedVenue(ownerId, venueId);
+        photoService.deleteAllOf(venueId);
+        venueRepository.delete(venue);
         events.publishEvent(new VenueDeletedEvent(venueId));
     }
 
@@ -186,7 +190,7 @@ public class VenueService {
     private VenueResponse withSpaces(Venue venue) {
         List<SpaceResponse> spaces = spaceRepository.findByVenueIdOrderByCreatedAtAscIdAsc(venue.getId())
                 .stream().map(SpaceResponse::from).toList();
-        return VenueResponse.from(venue, spaces);
+        return VenueResponse.from(venue, photoService.photosOf(venue.getId()), spaces);
     }
 
     private static void apply(Venue venue, VenueRequest request) {

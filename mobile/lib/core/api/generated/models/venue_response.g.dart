@@ -23,6 +23,9 @@ VenueResponse _$VenueResponseFromJson(Map<String, dynamic> json) =>
       latitude: (json['latitude'] as num).toDouble(),
       longitude: (json['longitude'] as num).toDouble(),
       name: json['name'] as String,
+      photos: (json['photos'] as List<dynamic>)
+          .map((e) => VenuePhotoDto.fromJson(e as Map<String, dynamic>))
+          .toList(),
       rejectionReason: json['rejectionReason'] as String?,
       spaces: (json['spaces'] as List<dynamic>)
           .map((e) => SpaceResponse.fromJson(e as Map<String, dynamic>))
@@ -49,6 +52,7 @@ Map<String, dynamic> _$VenueResponseToJson(
   'latitude': instance.latitude,
   'longitude': instance.longitude,
   'name': instance.name,
+  'photos': instance.photos,
   'rejectionReason': instance.rejectionReason,
   'spaces': instance.spaces,
   'verificationIssues': instance.verificationIssues
@@ -69,6 +73,7 @@ const _$VenueResponseVerificationIssuesEnumMap = {
   VenueResponseVerificationIssues.fssaiCertificate: 'FSSAI_CERTIFICATE',
   VenueResponseVerificationIssues.leaseAgreement: 'LEASE_AGREEMENT',
   VenueResponseVerificationIssues.venueDetails: 'VENUE_DETAILS',
+  VenueResponseVerificationIssues.photos: 'PHOTOS',
   VenueResponseVerificationIssues.$unknown: r'$unknown',
 };
 

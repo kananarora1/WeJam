@@ -14,6 +14,7 @@ public record VenueVerificationRow(
         UUID ownerId,
         String fssaiNumber,
         LocalDate fssaiValidUntil,
+        int photoCount,
         VerificationStatus status,
         Instant requestedAt,
         long otherVenuesWithSameFssai) {

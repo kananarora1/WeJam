@@ -8,8 +8,11 @@ import 'package:retrofit/retrofit.dart';
 import '../models/document_response.dart';
 import '../models/document_upload_request.dart';
 import '../models/document_upload_response.dart';
+import '../models/photo_upload_request.dart';
+import '../models/photo_upload_response.dart';
 import '../models/space_request.dart';
 import '../models/space_response.dart';
+import '../models/venue_photo_dto.dart';
 import '../models/venue_request.dart';
 import '../models/venue_response.dart';
 import '../models/venue_summary.dart';
@@ -65,6 +68,24 @@ abstract class VenuesClient {
   Future<DocumentResponse> confirmVenueDocument({
     @Path('venueId') required String venueId,
     @Path('documentId') required String documentId,
+  });
+
+  @POST('/api/v1/venues/{venueId}/photos')
+  Future<PhotoUploadResponse> startVenuePhotoUpload({
+    @Path('venueId') required String venueId,
+    @Body() required PhotoUploadRequest body,
+  });
+
+  @DELETE('/api/v1/venues/{venueId}/photos/{photoId}')
+  Future<void> deleteVenuePhoto({
+    @Path('venueId') required String venueId,
+    @Path('photoId') required String photoId,
+  });
+
+  @POST('/api/v1/venues/{venueId}/photos/{photoId}/confirm')
+  Future<VenuePhotoDto> confirmVenuePhoto({
+    @Path('venueId') required String venueId,
+    @Path('photoId') required String photoId,
   });
 
   @POST('/api/v1/venues/{venueId}/resubmit')

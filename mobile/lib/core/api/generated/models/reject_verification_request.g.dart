@@ -33,5 +33,6 @@ const _$RejectVerificationRequestIssuesEnumMap = {
   RejectVerificationRequestIssues.fssaiCertificate: 'FSSAI_CERTIFICATE',
   RejectVerificationRequestIssues.leaseAgreement: 'LEASE_AGREEMENT',
   RejectVerificationRequestIssues.venueDetails: 'VENUE_DETAILS',
+  RejectVerificationRequestIssues.photos: 'PHOTOS',
   RejectVerificationRequestIssues.$unknown: r'$unknown',
 };

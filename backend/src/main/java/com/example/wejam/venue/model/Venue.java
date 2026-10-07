@@ -76,6 +76,10 @@ public class Venue {
     @Column(name = "verification_issues")
     private String[] verificationIssues = new String[0];
 
+    /** Confirmed photos. Read-only here: only the atomic counter queries in VenueRepository write it (ADR-026). */
+    @Column(name = "photo_count", insertable = false, updatable = false)
+    private int photoCount;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private Instant createdAt;

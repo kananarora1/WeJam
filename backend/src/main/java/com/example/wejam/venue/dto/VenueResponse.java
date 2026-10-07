@@ -30,12 +30,15 @@ public record VenueResponse(
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED, nullable = true) String rejectionReason,
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "What to fix after a rejection; empty otherwise")
         List<VerificationIssue> verificationIssues,
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED,
+                description = "Upload order; the first is the cover. Public URLs, safe to cache.")
+        List<VenuePhotoDto> photos,
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED) List<SpaceResponse> spaces) {
 
-    public static VenueResponse from(Venue venue, List<SpaceResponse> spaces) {
+    public static VenueResponse from(Venue venue, List<VenuePhotoDto> photos, List<SpaceResponse> spaces) {
         return new VenueResponse(venue.getId(), venue.getName(), venue.getDescription(), venue.getAddressLine(),
                 venue.getCity(), venue.getLatitude(), venue.getLongitude(), venue.getFssaiNumber(),
                 venue.getFssaiLicenseName(), venue.getFssaiValidUntil(),
-                venue.getHostingMode(), venue.getVerificationStatus(), venue.getRejectionReason(), venue.getVerificationIssues(), spaces);
+                venue.getHostingMode(), venue.getVerificationStatus(), venue.getRejectionReason(), venue.getVerificationIssues(), photos, spaces);
     }
 }

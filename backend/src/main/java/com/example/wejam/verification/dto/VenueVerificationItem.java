@@ -14,6 +14,8 @@ public record VenueVerificationItem(
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED, nullable = true) String ownerName,
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED) String fssaiNumber,
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED, nullable = true) LocalDate fssaiValidUntil,
+        @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "Design asks venues for at least 3")
+        int photoCount,
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED) VerificationStatus status,
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED) Instant requestedAt,
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED) VerificationChecks checks) {

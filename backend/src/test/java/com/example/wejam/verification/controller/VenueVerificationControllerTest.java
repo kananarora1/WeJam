@@ -68,6 +68,7 @@ class VenueVerificationControllerTest {
         createVenue(accessTokenWithRole(mvc, randomUid(), "VENUE_ADMIN"), fssai); // a duplicate of `first`
         // Expired since it was submitted (the API itself refuses a past date).
         jdbc.update("UPDATE venues SET fssai_valid_until = DATE '2020-01-31' WHERE id = ?", UUID.fromString(second));
+        jdbc.update("UPDATE venues SET photo_count = 3 WHERE id = ?", UUID.fromString(first));
 
         MvcTestResult queue = get("/api/v1/admin/venue-verifications", admin);
 
@@ -83,6 +84,10 @@ class VenueVerificationControllerTest {
                         .asArray().containsExactly("2030-03-31"),
                 json -> json.assertThat().extractingPath("$[?(@.venueId=='" + first + "')].checks.licenseExpired")
                         .asArray().containsExactly(false),
+                json -> json.assertThat().extractingPath("$[?(@.venueId=='" + first + "')].photoCount")
+                        .asArray().containsExactly(3),
+                json -> json.assertThat().extractingPath("$[?(@.venueId=='" + second + "')].photoCount")
+                        .asArray().containsExactly(0),
                 json -> json.assertThat().extractingPath("$[?(@.venueId=='" + second + "')].checks.fssaiStructureLooksValid")
                         .asArray().containsExactly(false),
                 json -> json.assertThat().extractingPath("$[?(@.venueId=='" + second + "')].checks.licenseExpired")

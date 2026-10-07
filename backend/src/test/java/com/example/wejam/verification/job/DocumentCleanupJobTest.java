@@ -1,6 +1,7 @@
 package com.example.wejam.verification.job;
 
 import com.example.wejam.IntegrationTest;
+import com.example.wejam.common.storage.Bucket;
 import com.example.wejam.common.storage.ObjectStorage;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -62,7 +63,7 @@ class DocumentCleanupJobTest {
         job.run();
 
         assertThat(keysOf(id)).isEmpty();
-        assertThat(storage.head(keys.getFirst())).isEmpty();
+        assertThat(storage.head(Bucket.PRIVATE, keys.getFirst())).isEmpty();
         assertThat(get(mvc, "/api/v1/host-profiles/" + id, host)).bodyJson()
                 .extractingPath("$.verified").isEqualTo(true);
     }
@@ -111,7 +112,7 @@ class DocumentCleanupJobTest {
         UUID abandonedId = UUID.fromString(read(body(abandoned), "$.documentId"));
         String abandonedKey = jdbc.queryForObject("SELECT storage_key FROM verification_documents WHERE id = ?",
                 String.class, abandonedId);
-        assertThat(storage.head(abandonedKey)).isPresent();
+        assertThat(storage.head(Bucket.PRIVATE, abandonedKey)).isPresent();
 
         jdbc.update("UPDATE verification_documents SET created_at = now() - interval '25 hours' WHERE id = ?",
                 abandonedId);
@@ -119,7 +120,7 @@ class DocumentCleanupJobTest {
 
         assertThat(jdbc.queryForObject("SELECT count(*) FROM verification_documents WHERE id = ?", Integer.class,
                 abandonedId)).isZero();
-        assertThat(storage.head(abandonedKey)).isEmpty();
+        assertThat(storage.head(Bucket.PRIVATE, abandonedKey)).isEmpty();
         assertThat(jdbc.queryForObject("SELECT count(*) FROM verification_documents WHERE id = ?", Integer.class,
                 UUID.fromString(read(body(fresh), "$.documentId")))).isEqualTo(1);
     }

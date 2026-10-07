@@ -15,6 +15,8 @@ enum VenueResponseVerificationIssues {
   leaseAgreement('LEASE_AGREEMENT'),
   @JsonValue('VENUE_DETAILS')
   venueDetails('VENUE_DETAILS'),
+  @JsonValue('PHOTOS')
+  photos('PHOTOS'),
   /// Default value for all unparsed values, allows backward compatibility when adding new values on the backend.
   $unknown(null);
 

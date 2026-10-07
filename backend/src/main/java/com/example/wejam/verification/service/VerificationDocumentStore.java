@@ -1,5 +1,6 @@
 package com.example.wejam.verification.service;
 
+import com.example.wejam.common.storage.Bucket;
 import com.example.wejam.common.storage.ObjectStorage;
 import com.example.wejam.common.storage.PresignedUpload;
 import com.example.wejam.common.storage.StoredObject;
@@ -45,7 +46,7 @@ class VerificationDocumentStore {
         String key = "verification/" + folder(ownerType) + "/" + ownerId + "/" + id;
         documents.save(new VerificationDocument(id, ownerType, ownerId, request.type(), key,
                 request.contentType(), request.sizeBytes()));
-        PresignedUpload upload = storage.presignUpload(key, request.contentType(), request.sizeBytes());
+        PresignedUpload upload = storage.presignUpload(Bucket.PRIVATE, key, request.contentType(), request.sizeBytes());
         return new DocumentUploadResponse(id, upload.url(), "PUT", upload.headers(), upload.expiresAt());
     }
 
@@ -55,7 +56,8 @@ class VerificationDocumentStore {
         if (document.getStatus() == DocumentStatus.UPLOADED) {
             return document; // confirming twice is harmless
         }
-        StoredObject stored = storage.head(document.getStorageKey()).orElseThrow(DocumentException::notUploadedYet);
+        StoredObject stored = storage.head(Bucket.PRIVATE, document.getStorageKey())
+                .orElseThrow(DocumentException::notUploadedYet);
         if (stored.sizeBytes() != document.getSizeBytes() || !document.getContentType().equals(stored.contentType())) {
             // Can't normally happen: size and type are part of the upload signature.
             throw DocumentException.uploadMismatch();
@@ -67,7 +69,7 @@ class VerificationDocumentStore {
                     // Hibernate flushes UPDATEs before DELETEs; without this flush, marking the new one UPLOADED
                     // would hit the one-current-document-per-type unique index while the old row still exists.
                     documents.flush();
-                    storage.deleteAfterCommit(previous.getStorageKey());
+                    storage.deleteAfterCommit(Bucket.PRIVATE, previous.getStorageKey());
                 });
         document.markUploaded();
         return document;
@@ -86,14 +88,14 @@ class VerificationDocumentStore {
     void delete(DocumentOwnerType ownerType, UUID ownerId, UUID documentId) {
         VerificationDocument document = owned(ownerType, ownerId, documentId);
         documents.delete(document);
-        storage.deleteAfterCommit(document.getStorageKey());
+        storage.deleteAfterCommit(Bucket.PRIVATE, document.getStorageKey());
     }
 
     /** Rows now, files after commit. */
     void deleteAll(DocumentOwnerType ownerType, UUID ownerId) {
         List<VerificationDocument> all = documents.findByOwnerTypeAndOwnerId(ownerType, ownerId);
         documents.deleteAll(all);
-        all.forEach(d -> storage.deleteAfterCommit(d.getStorageKey()));
+        all.forEach(d -> storage.deleteAfterCommit(Bucket.PRIVATE, d.getStorageKey()));
     }
 
     /** {@code at} = null keeps the uploaded documents indefinitely. */

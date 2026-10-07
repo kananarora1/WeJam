@@ -51,7 +51,8 @@ public class VenueVerificationService {
         Map<UUID, UserSummary> owners = userService.summaries(rows.stream().map(VenueVerificationRow::ownerId).distinct().toList());
         LocalDate today = LocalDate.now();
         return rows.stream().map(r -> new VenueVerificationItem(r.venueId(), r.name(), r.city(),
-                nameOf(owners.get(r.ownerId())), r.fssaiNumber(), r.fssaiValidUntil(), r.status(), r.requestedAt(),
+                nameOf(owners.get(r.ownerId())), r.fssaiNumber(), r.fssaiValidUntil(), r.photoCount(), r.status(),
+                r.requestedAt(),
                 new VerificationChecks(FssaiChecks.structureLooksValid(r.fssaiNumber()),
                         r.otherVenuesWithSameFssai(), FssaiChecks.expired(r.fssaiValidUntil(), today)))).toList();
     }

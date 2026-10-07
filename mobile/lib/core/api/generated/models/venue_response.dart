@@ -5,6 +5,7 @@
 import 'package:json_annotation/json_annotation.dart';
 
 import 'space_response.dart';
+import 'venue_photo_dto.dart';
 import 'venue_response_hosting_mode.dart';
 import 'venue_response_verification_issues.dart';
 import 'venue_response_verification_status.dart';
@@ -25,6 +26,7 @@ class VenueResponse {
     required this.latitude,
     required this.longitude,
     required this.name,
+    required this.photos,
     required this.rejectionReason,
     required this.spaces,
     required this.verificationIssues,
@@ -48,6 +50,9 @@ class VenueResponse {
   final double latitude;
   final double longitude;
   final String name;
+
+  /// Upload order; the first is the cover. Public URLs, safe to cache.
+  final List<VenuePhotoDto> photos;
   final String? rejectionReason;
   final List<SpaceResponse> spaces;
 

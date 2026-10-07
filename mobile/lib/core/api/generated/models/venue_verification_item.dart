@@ -18,6 +18,7 @@ class VenueVerificationItem {
     required this.fssaiValidUntil,
     required this.name,
     required this.ownerName,
+    required this.photoCount,
     required this.requestedAt,
     required this.status,
     required this.venueId,
@@ -31,6 +32,9 @@ class VenueVerificationItem {
   final DateTime? fssaiValidUntil;
   final String name;
   final String? ownerName;
+
+  /// Design asks venues for at least 3
+  final int photoCount;
   final DateTime requestedAt;
   final VenueVerificationItemStatus status;
   final String venueId;

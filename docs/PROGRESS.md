@@ -166,3 +166,14 @@ Log of completed steps (what was built, key decisions). Newest at the bottom.
 - Spec + Dart client regenerated. No app UI yet.
 - Tests: 111 backend (+ license fields required/validated, every license field resets verification, others can't see unverified venues, expired-license check, owner agreement upload), 37 mobile.
 - Deferred: design 7.3 allows up to 3 lease files; we keep one file per type (a multi-page lease is one PDF).
+
+## Step 5e — Venue photos + public storage (2026-10-08)
+- Infra: second bucket `wejam-public` (Compose `minio-init` + test container). Anonymous `s3:GetObject` only — files are readable by URL, the bucket can't be listed (mc's built-in `download` policy would allow listing). The private bucket is unchanged.
+- `common/storage`: every `ObjectStorage` operation names its `Bucket` (PRIVATE / PUBLIC); `publicUrl(key)` builds permanent links from `wejam.storage.public-base-url` (CDN later) or the public bucket on the public endpoint. Only keys are stored, so a LAN-IP or CDN change needs no data change.
+- Flyway V13: `venue_photos` (jpeg/png/webp ≤ 5 MB, PENDING_UPLOAD → UPLOADED), `venues.photo_count` (0–10), `PHOTOS` rejection flag.
+- Venue module: `POST /venues/{id}/photos` (start), `…/{photoId}/confirm`, `DELETE …/{photoId}`; owner only, any verification state, never affects verification. `VenueResponse.photos` = `[{id, url}]` in upload order, first = cover. Cap enforced at confirm by an atomic counter plus a conditional status update (ADR-026 pattern); a cheap early check refuses an 11th start. Deleting a venue deletes its photo files after commit. `VenuePhotoCleanupJob` sweeps abandoned photo uploads (locked batches, file then row).
+- Admin queue items gain `photoCount`; reject accepts `PHOTOS`.
+- Config renames (from 5c): `wejam.verification.abandoned-upload-age` → `wejam.storage.abandoned-upload-age`; `wejam.verification.cleanup-interval` → `wejam.jobs.cleanup-interval` (env `WEJAM_JOBS_CLEANUP_INTERVAL`). New optional `STORAGE_PUBLIC_BASE_URL`.
+- Tests: upload/download helper moved to `TestUploads` (shared by venue + verification tests). 122 backend (+10 photo incl. anonymous download, bucket not listable, private stays private, cap with 12 parallel confirms → exactly 10, type/size limits, owner-only, verification unaffected, file deletion; +1 photo sweep; admin photo count + PHOTOS flag), 37 mobile.
+- "At least 3 photos" (design 7.1) is for the app's onboarding to enforce; the admin sees the count. No cover choice/reordering yet — revisit with the venue screens.
+- Step 5 (verification + platform admin) complete.
