@@ -46,6 +46,7 @@ const _$HostProfileRequestGenresEnumMap = {
   HostProfileRequestGenres.pop: 'POP',
   HostProfileRequestGenres.folk: 'FOLK',
   HostProfileRequestGenres.soul: 'SOUL',
+  HostProfileRequestGenres.rnb: 'RNB',
   HostProfileRequestGenres.funk: 'FUNK',
   HostProfileRequestGenres.sufi: 'SUFI',
   HostProfileRequestGenres.bollywood: 'BOLLYWOOD',

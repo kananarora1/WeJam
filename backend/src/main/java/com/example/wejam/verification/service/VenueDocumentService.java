@@ -53,8 +53,13 @@ public class VenueDocumentService {
         return uploadedDocuments(venueId);
     }
 
+    /** The certificate is required for review, so once submitted it can be replaced (upload again) but not removed. */
     public void delete(UUID ownerId, UUID venueId, UUID documentId) {
-        requireEditable(ownerId, venueId);
+        VerificationStatus status = requireEditable(ownerId, venueId);
+        if (status != VerificationStatus.DRAFT && store.owned(DocumentOwnerType.VENUE, venueId, documentId)
+                .getDocType() == DocumentType.FSSAI_CERTIFICATE) {
+            throw DocumentException.certificateCantBeRemoved();
+        }
         store.delete(DocumentOwnerType.VENUE, venueId, documentId);
     }
 
@@ -70,9 +75,11 @@ public class VenueDocumentService {
         store.deleteAll(DocumentOwnerType.VENUE, event.venueId());
     }
 
-    private void requireEditable(UUID ownerId, UUID venueId) {
-        if (venueService.ownedVenueStatus(ownerId, venueId) == VerificationStatus.VERIFIED) {
+    private VerificationStatus requireEditable(UUID ownerId, UUID venueId) {
+        VerificationStatus status = venueService.ownedVenueStatus(ownerId, venueId);
+        if (status == VerificationStatus.VERIFIED) {
             throw DocumentException.venueAlreadyVerified();
         }
+        return status;
     }
 }

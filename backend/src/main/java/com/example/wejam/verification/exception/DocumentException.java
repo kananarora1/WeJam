@@ -44,6 +44,11 @@ public class DocumentException extends ErrorResponseException {
                 Map.of("contentType", "must be image/jpeg, image/png or application/pdf"));
     }
 
+    public static DocumentException certificateCantBeRemoved() {
+        return new DocumentException(HttpStatus.CONFLICT,
+                "Your FSSAI certificate is needed for review. Upload a new one to replace it instead.");
+    }
+
     public static DocumentException hostAlreadyVerified() {
         return new DocumentException(HttpStatus.CONFLICT, "You're already verified; your ID can't be changed");
     }

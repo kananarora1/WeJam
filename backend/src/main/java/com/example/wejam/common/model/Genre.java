@@ -9,6 +9,7 @@ public enum Genre {
     POP,
     FOLK,
     SOUL,
+    RNB,
     FUNK,
     SUFI,
     BOLLYWOOD,

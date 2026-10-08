@@ -1,6 +1,7 @@
 package com.example.wejam.venue.controller;
 
 import com.example.wejam.IntegrationTest;
+import com.example.wejam.TestVenues;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -61,6 +62,7 @@ class VenueDraftControllerTest {
                 json -> json.assertThat().extractingPath("$.errors.fssaiNumber").isNotNull(),
                 json -> json.assertThat().extractingPath("$.errors.fssaiLicenseName").isNotNull(),
                 json -> json.assertThat().extractingPath("$.errors.fssaiValidUntil").isNotNull(),
+                json -> json.assertThat().extractingPath("$.errors.fssaiCertificate").isNotNull(),
                 json -> json.assertThat().extractingPath("$.errors.photos").isEqualTo("add at least 3 (you have 0)"));
         assertThat(status()).isEqualTo("DRAFT");
     }
@@ -73,9 +75,11 @@ class VenueDraftControllerTest {
         uploadPhoto();
         assertThat(submit(owner)).hasStatus(400).bodyJson().satisfies(
                 json -> json.assertThat().extractingPath("$.errors.photos").isEqualTo("add at least 3 (you have 2)"),
+                json -> json.assertThat().extractingPath("$.errors.fssaiCertificate").isNotNull(),
                 json -> json.assertThat().doesNotHavePath("$.errors.fssaiNumber"));
 
         uploadPhoto();
+        uploadCertificate();
         assertThat(submit(owner)).hasStatusOk().bodyJson().extractingPath("$.verificationStatus").isEqualTo("PENDING");
         assertThat(submit(owner)).hasStatus(409);
 
@@ -95,7 +99,7 @@ class VenueDraftControllerTest {
     @Test
     void licenseDetailsCannotBeRemovedOnceSubmitted() {
         send(mvc.put().uri("/api/v1/venues/{id}", venueId), owner, withLicense());
-        jdbc.update("UPDATE venues SET photo_count = 3 WHERE id = ?", UUID.fromString(venueId)); // counted, not uploaded
+        TestVenues.markReadyToSubmit(jdbc, venueId);
         assertThat(submit(owner)).hasStatusOk();
 
         assertThat(send(mvc.put().uri("/api/v1/venues/{id}", venueId), owner, DETAILS_ONLY)).hasStatus(400)
@@ -110,6 +114,22 @@ class VenueDraftControllerTest {
 
         assertThat(submit(owner)).hasStatus(400)
                 .bodyJson().extractingPath("$.errors.fssaiValidUntil").asString().startsWith("has passed");
+    }
+
+    @Test
+    void theCertificateCanBeReplacedButNotRemovedOnceSubmitted() throws Exception {
+        send(mvc.put().uri("/api/v1/venues/{id}", venueId), owner, withLicense());
+        String certificateId = uploadCertificate();
+        jdbc.update("UPDATE venues SET photo_count = 3 WHERE id = ?", UUID.fromString(venueId));
+        assertThat(submit(owner)).hasStatusOk();
+
+        assertThat(send(mvc.delete().uri("/api/v1/venues/{v}/documents/{d}", venueId, certificateId), owner, null))
+                .hasStatus(409);
+        uploadCertificate(); // replacing is fine
+        assertThat(jdbc.queryForObject("""
+                SELECT count(*) FROM verification_documents
+                WHERE owner_id = ? AND doc_type = 'FSSAI_CERTIFICATE' AND status = 'UPLOADED'
+                """, Integer.class, UUID.fromString(venueId))).isEqualTo(1);
     }
 
     @Test
@@ -137,6 +157,18 @@ class VenueDraftControllerTest {
         assertThat(put(start, JPEG, "image/jpeg")).isEqualTo(200);
         assertThat(send(mvc.post().uri("/api/v1/venues/{v}/photos/{p}/confirm", venueId,
                 (String) read(body(start), "$.photoId")), owner, null)).hasStatusOk();
+    }
+
+    /** Returns the document id. */
+    private String uploadCertificate() throws Exception {
+        MvcTestResult start = send(mvc.post().uri("/api/v1/venues/{id}/documents", venueId), owner,
+                "{\"type\":\"FSSAI_CERTIFICATE\",\"contentType\":\"image/jpeg\",\"sizeBytes\":%d}"
+                        .formatted(JPEG.length));
+        assertThat(put(start, JPEG, "image/jpeg")).isEqualTo(200);
+        String documentId = read(body(start), "$.documentId");
+        assertThat(send(mvc.post().uri("/api/v1/venues/{v}/documents/{d}/confirm", venueId, documentId), owner, null))
+                .hasStatusOk();
+        return documentId;
     }
 
     private MvcTestResult submit(String token) {

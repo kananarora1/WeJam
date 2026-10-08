@@ -187,3 +187,10 @@ Log of completed steps (what was built, key decisions). Newest at the bottom.
 - Reverses 5e decision 3: "at least 3 photos" is now enforced by the server at submit (there was no submit step before). A verified venue can still drop below 3.
 - Tests: 129 backend (+7 `VenueDraftControllerTest` incl. real photo uploads, missing-field listing, queue exclusion, DB CHECK; existing tests now submit before admin review, SQL status shortcuts set `verification_requested_at`), 37 mobile. Spec + Dart client regenerated.
 - Plan change (user decision): an app checkpoint before step 6 — M2a role choice + venue details/map, M2b venue photos (upload pipeline), M2c FSSAI/documents/submit/status screens, M2d host profile. Spaces/hosting-settings screens move next to availability slots (after step 6). CLAUDE.md §8 unchanged; recorded here.
+
+## Step 5g — Design sync: certificate required, R&B (2026-10-08)
+- The design was updated to match the backend (Claude Design prompt built from steps 3–5f); reviewing it surfaced four disagreements, settled as: keep one rejection reason + 5 flags; keep the backend genre list; drop the admin "Resubmitted" tab; require the FSSAI certificate.
+- Submit now also needs an uploaded FSSAI certificate (`errors.fssaiCertificate`): with no registry lookup it's the reviewer's only evidence of the license name and expiry. The venue module can't depend on the verification module (the reverse dependency exists), so it defines `VenueSubmissionRequirement` and the verification module plugs in `FssaiCertificateRequirement` (dependency inversion; Spring injects all implementations).
+- Once a venue is submitted, its certificate can be replaced (upload again) but not removed (409) — so a pending or resubmitted venue always has one.
+- `Genre` gains `RNB` (R&B), 18 genres. Stored as text, so no migration.
+- Tests: 130 backend (+certificate in the missing list and the full submit flow, replace-not-remove; shared `TestVenues.markReadyToSubmit` shortcut for tests that need a reviewable venue), 37 mobile. Spec + Dart client regenerated.

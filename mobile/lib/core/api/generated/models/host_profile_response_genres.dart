@@ -20,6 +20,8 @@ enum HostProfileResponseGenres {
   folk('FOLK'),
   @JsonValue('SOUL')
   soul('SOUL'),
+  @JsonValue('RNB')
+  rnb('RNB'),
   @JsonValue('FUNK')
   funk('FUNK'),
   @JsonValue('SUFI')

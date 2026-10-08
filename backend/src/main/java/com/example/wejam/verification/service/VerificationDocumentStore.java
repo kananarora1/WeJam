@@ -108,7 +108,7 @@ class VerificationDocumentStore {
                 storage.presignDownload(d.getStorageKey()), storage.downloadUrlExpiry(), d.getDeleteAfter());
     }
 
-    private VerificationDocument owned(DocumentOwnerType ownerType, UUID ownerId, UUID documentId) {
+    VerificationDocument owned(DocumentOwnerType ownerType, UUID ownerId, UUID documentId) {
         return documents.findByIdAndOwnerTypeAndOwnerId(documentId, ownerType, ownerId)
                 .orElseThrow(DocumentException::notFound);
     }

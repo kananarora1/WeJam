@@ -1,6 +1,7 @@
 package com.example.wejam.verification.controller;
 
 import com.example.wejam.IntegrationTest;
+import com.example.wejam.TestVenues;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -228,9 +229,9 @@ class VenueVerificationControllerTest {
                 .contentType(MediaType.APPLICATION_JSON).content(json).exchange();
     }
 
-    /** Into the review queue. Photos are counted, not uploaded: VenueDraftControllerTest covers real uploads. */
+    /** Into the review queue. */
     private void submit(String venueId, String token) {
-        jdbc.update("UPDATE venues SET photo_count = 3 WHERE id = ?", UUID.fromString(venueId));
+        TestVenues.markReadyToSubmit(jdbc, venueId);
         assertThat(send(mvc.post().uri("/api/v1/venues/{id}/submit", venueId), token, "")).hasStatusOk();
     }
 }

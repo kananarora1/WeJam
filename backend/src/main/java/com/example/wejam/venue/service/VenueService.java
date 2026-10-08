@@ -43,13 +43,16 @@ public class VenueService {
     private final VenueRepository venueRepository;
     private final SpaceRepository spaceRepository;
     private final VenuePhotoService photoService;
+    private final List<VenueSubmissionRequirement> submissionRequirements;
     private final ApplicationEventPublisher events;
 
     public VenueService(VenueRepository venueRepository, SpaceRepository spaceRepository,
-                        VenuePhotoService photoService, ApplicationEventPublisher events) {
+                        VenuePhotoService photoService, List<VenueSubmissionRequirement> submissionRequirements,
+                        ApplicationEventPublisher events) {
         this.venueRepository = venueRepository;
         this.spaceRepository = spaceRepository;
         this.photoService = photoService;
+        this.submissionRequirements = submissionRequirements;
         this.events = events;
     }
 
@@ -116,6 +119,7 @@ public class VenueService {
             missing.put("photos", "add at least %d (you have %d)"
                     .formatted(VenuePhotoService.MIN_PHOTOS_TO_SUBMIT, venue.getPhotoCount()));
         }
+        submissionRequirements.forEach(requirement -> missing.putAll(requirement.missing(venueId)));
         if (!missing.isEmpty()) {
             throw new IncompleteVenueException(missing);
         }
