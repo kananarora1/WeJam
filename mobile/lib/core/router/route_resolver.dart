@@ -11,6 +11,27 @@ abstract final class Routes {
   static const sessionError = '/session-error';
   static const name = '/name';
   static const profile = '/profile';
+  static const venue = '/venue';
+  static const newVenue = '/venue/new';
+  static String venueDetails(String venueId) => '/venue/$venueId/details';
+
+  /// Where a signed-in, onboarded user lands: venue owners start at their venue.
+  static String home(Account account) =>
+      account.roles.contains(Role.venueAdmin) ? venue : profile;
+}
+
+/// Past the gates (signed in, session ready, named), these screens and everything under them can be
+/// visited freely; before that, only the gate's own screen is allowed.
+const _signedInAreas = [Routes.profile, Routes.venue];
+
+/// Pure so the rules are unit-testable: null = stay at [location].
+String? redirectFor({required String location, required String target}) {
+  if (location == target) return null;
+  final pastTheGates = target == Routes.profile || target == Routes.venue;
+  final inSignedInArea = _signedInAreas.any(
+    (area) => location == area || location.startsWith('$area/'),
+  );
+  return pastTheGates && inSignedInArea ? null : target;
 }
 
 /// Where the user must be, given the app's state. Pure so the rules are unit-testable.
@@ -34,5 +55,5 @@ String resolveRoute({
   if (account == null) return Routes.loading;
   // Nobody gets past onboarding without a name, even after closing the app halfway.
   if (account.displayName == null) return Routes.name;
-  return Routes.profile;
+  return Routes.home(account);
 }

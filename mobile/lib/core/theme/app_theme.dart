@@ -41,6 +41,17 @@ ThemeData buildDarkTheme() {
       errorBorder: _inputBorder(t.wine),
       focusedErrorBorder: _inputBorder(t.wineText, width: 1.5),
     ),
+    // Raised dark surface, not Material's default light snackbar, so messages sit in the room.
+    snackBarTheme: SnackBarThemeData(
+      backgroundColor: t.surface3,
+      contentTextStyle: textTheme.bodyMedium?.copyWith(color: t.textPrimary),
+      actionTextColor: t.amberText,
+      behavior: SnackBarBehavior.floating,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppRadii.md),
+        side: BorderSide(color: t.line),
+      ),
+    ),
     filledButtonTheme: FilledButtonThemeData(
       style: FilledButton.styleFrom(
         backgroundColor: t.amber,

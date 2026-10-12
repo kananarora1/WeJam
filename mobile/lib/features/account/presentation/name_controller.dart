@@ -3,11 +3,24 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/api/api_error.dart';
 import '../data/account_repository.dart';
+import '../domain/account.dart';
 import 'session_controller.dart';
 
-/// State of the "What should we call you?" form. Auto-disposed, so it starts fresh each visit.
+/// State of the "Who's coming tonight?" form (design 1.4). Auto-disposed, so it starts fresh each visit.
 final nameControllerProvider =
     NotifierProvider.autoDispose<NameController, NameState>(NameController.new);
+
+/// "I'm here to…" on the onboarding screen. Changeable later from Profile.
+enum HereFor {
+  playOrListen(null),
+  hostJams(Role.host),
+  runAVenue(Role.venueAdmin);
+
+  const HereFor(this.role);
+
+  /// The role this adds on top of the default USER role, if any.
+  final Role? role;
+}
 
 @immutable
 class NameState {
@@ -35,7 +48,10 @@ class NameController extends Notifier<NameState> {
     return null;
   }
 
-  Future<void> submit(String raw) async {
+  Future<void> submit(
+    String raw, {
+    HereFor hereFor = HereFor.playOrListen,
+  }) async {
     if (state.submitting) return;
     final invalid = validate(raw);
     if (invalid != null) {
@@ -45,12 +61,18 @@ class NameController extends Notifier<NameState> {
 
     state = const NameState(submitting: true);
     try {
+      final session = ref.read(sessionControllerProvider.notifier);
+      // The role goes first: the router leaves this screen the moment a name exists, so the role
+      // (and the token carrying it) must already be in place. Adding a role twice is harmless.
+      final role = hereFor.role;
+      if (role != null) await session.addRole(role);
+      if (!ref.mounted) return;
       final account = await ref
           .read(accountRepositoryProvider)
           .updateDisplayName(raw.trim());
       if (!ref.mounted) return;
       // The router now sees a name and leaves this screen, which disposes this controller.
-      ref.read(sessionControllerProvider.notifier).accountUpdated(account);
+      session.accountUpdated(account);
     } on ApiFailure catch (e) {
       if (!ref.mounted) return;
       state = NameState(error: e.message);

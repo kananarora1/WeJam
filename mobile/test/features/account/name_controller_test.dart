@@ -1,7 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:wejam/core/api/api_error.dart';
+import 'package:wejam/core/api/app_token_store.dart';
 import 'package:wejam/features/account/data/account_repository.dart';
+import 'package:wejam/features/account/domain/account.dart';
 import 'package:wejam/features/account/presentation/name_controller.dart';
 import 'package:wejam/features/account/presentation/session_controller.dart';
 import 'package:wejam/features/auth/data/phone_auth_service.dart';
@@ -42,6 +44,45 @@ void main() {
       'Rhea M.',
     );
   });
+
+  test(
+    '"Run a venue" adds the role, with its new token, before saving the name',
+    () async {
+      await controller().submit('Rhea', hereFor: HereFor.runAVenue);
+
+      // Role first: the router leaves onboarding as soon as a name exists.
+      expect(accounts.calls, ['addRole:venueAdmin', 'name:Rhea']);
+      expect(
+        container.read(appTokenStoreProvider).accessToken,
+        'jwt-with-venueAdmin',
+      );
+      final account = container.read(sessionControllerProvider).value!;
+      expect(account.roles, contains(Role.venueAdmin));
+      expect(account.displayName, 'Rhea');
+    },
+  );
+
+  test('"Play or listen" adds no role', () async {
+    await controller().submit('Rhea');
+
+    expect(accounts.calls, ['name:Rhea']);
+  });
+
+  test(
+    'if the role can\'t be added, the name isn\'t saved and the error shows',
+    () async {
+      accounts.addRoleError = const ApiFailure("Can't reach WeJam right now.");
+
+      await controller().submit('Rhea', hereFor: HereFor.hostJams);
+
+      expect(accounts.calls, ['addRole:host']);
+      expect(state().error, "Can't reach WeJam right now.");
+      expect(
+        container.read(sessionControllerProvider).value?.displayName,
+        isNull,
+      );
+    },
+  );
 
   test('a blank name is rejected without calling the backend', () async {
     await controller().submit('   ');

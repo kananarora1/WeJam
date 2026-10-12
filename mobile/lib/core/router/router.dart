@@ -10,6 +10,8 @@ import '../../features/auth/presentation/auth_providers.dart';
 import '../../features/auth/presentation/otp_screen.dart';
 import '../../features/auth/presentation/phone_screen.dart';
 import '../../features/auth/presentation/splash_screen.dart';
+import '../../features/venue/presentation/my_venue_screen.dart';
+import '../../features/venue/presentation/venue_details_screen.dart';
 import '../theme/tokens.dart';
 import '../widgets/loading_screen.dart';
 import 'route_resolver.dart';
@@ -36,7 +38,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         awaitingCode: ref.read(phoneAuthControllerProvider).awaitingCode,
         session: ref.read(sessionControllerProvider),
       );
-      return state.matchedLocation == target ? null : target;
+      return redirectFor(location: state.matchedLocation, target: target);
     },
     routes: [
       _fadeRoute(Routes.splash, const SplashScreen()),
@@ -49,6 +51,20 @@ final routerProvider = Provider<GoRouter>((ref) {
       _fadeRoute(Routes.sessionError, const SessionErrorScreen()),
       _fadeRoute(Routes.name, const NameScreen()),
       _fadeRoute(Routes.profile, const ProfileScreen()),
+      _fadeRoute(
+        Routes.venue,
+        const MyVenueScreen(),
+        routes: [
+          _fadeRoute('new', const VenueDetailsScreen(venueId: null)),
+          GoRoute(
+            path: ':venueId/details',
+            pageBuilder: (_, state) => _fadePage(
+              state,
+              VenueDetailsScreen(venueId: state.pathParameters['venueId']),
+            ),
+          ),
+        ],
+      ),
     ],
   );
 
@@ -61,16 +77,24 @@ final routerProvider = Provider<GoRouter>((ref) {
 
 /// Calm cross-fade between screens. The platform default (a zoom on Android) would fight the
 /// splash's own pop-out.
-GoRoute _fadeRoute(String path, Widget screen) => GoRoute(
+GoRoute _fadeRoute(
+  String path,
+  Widget screen, {
+  List<RouteBase> routes = const [],
+}) => GoRoute(
   path: path,
-  pageBuilder: (_, state) => CustomTransitionPage<void>(
-    key: state.pageKey,
-    child: screen,
-    transitionDuration: AppMotion.standard,
-    reverseTransitionDuration: AppMotion.standard,
-    transitionsBuilder: (_, animation, _, child) => FadeTransition(
-      opacity: CurvedAnimation(parent: animation, curve: AppMotion.easeOut),
-      child: child,
-    ),
-  ),
+  routes: routes,
+  pageBuilder: (_, state) => _fadePage(state, screen),
 );
+
+Page<void> _fadePage(GoRouterState state, Widget screen) =>
+    CustomTransitionPage<void>(
+      key: state.pageKey,
+      child: screen,
+      transitionDuration: AppMotion.standard,
+      reverseTransitionDuration: AppMotion.standard,
+      transitionsBuilder: (_, animation, _, child) => FadeTransition(
+        opacity: CurvedAnimation(parent: animation, curve: AppMotion.easeOut),
+        child: child,
+      ),
+    );

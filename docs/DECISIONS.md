@@ -167,3 +167,9 @@ ADR-style log: context → decision → why.
 - **Why:** The app can save each onboarding step to the server (no lost work, resumable on another device) and attach photos from step 1. Reviewers only ever see complete submissions. Listing all gaps in one response lets the app highlight every field to fix. DB CHECKs make "submitted but incomplete" unrepresentable, whatever code path writes the row.
 - **Trade-off:** One more state in the venue lifecycle; tests that need a reviewable venue must submit it (photos are counted via SQL in those tests, uploaded for real in the draft tests).
 - **Amended (5g):** submit also requires an uploaded FSSAI certificate, checked through a `VenueSubmissionRequirement` that the verification module implements (so the venue module never depends on it). After submission the certificate can be replaced but not removed.
+
+## ADR-033: Gates are state-derived; past them, navigation is free
+- **Context:** M2a adds screens a signed-in user moves between (Profile, My venue, venue onboarding). The router so far allowed exactly one screen per app state.
+- **Decision:** `resolveRoute` still decides the gate (splash, login, OTP, session loading/error, onboarding) from state. Once every gate is passed, `redirectFor` lets any route under the signed-in areas (`/profile`, `/venue`) stand; a gate always wins over them. The landing screen depends on roles (venue owners → My venue). Adding a role during onboarding happens before saving the name, because saving the name is what releases the onboarding gate.
+- **Why:** Gates must be impossible to bypass (a deep link can't skip onboarding), while normal app navigation needs a stack (back from a form returns where you were). Keeping both rules pure functions keeps them unit-testable.
+- **Trade-off:** New signed-in areas must be added to the list; a forgotten one would redirect to the landing screen (visible immediately, not a security hole).

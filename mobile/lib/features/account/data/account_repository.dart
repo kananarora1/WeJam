@@ -35,6 +35,24 @@ class AccountRepository {
     ),
   );
 
+  /// Adds HOST or VENUE_ADMIN. Returns the new app JWT, which carries the role.
+  Future<String> addRole(Role role) => _call(() async {
+    final response = await _api.me.addRole(
+      body: AddRoleRequest(
+        role: switch (role) {
+          Role.host => AddRoleRequestRole.host,
+          Role.venueAdmin => AddRoleRequestRole.venueAdmin,
+          Role.user || Role.platformAdmin => throw ArgumentError.value(
+            role,
+            'role',
+            'is not self-assignable',
+          ),
+        },
+      ),
+    );
+    return response.accessToken;
+  });
+
   static Future<T> _call<T>(Future<T> Function() request) async {
     try {
       return await request();

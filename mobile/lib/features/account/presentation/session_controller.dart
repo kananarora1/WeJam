@@ -42,6 +42,16 @@ class SessionController extends AsyncNotifier<Account?> {
   /// A write endpoint returned the updated profile; use it instead of refetching `/me`.
   void accountUpdated(Account account) => state = AsyncData(account);
 
+  /// Turns on hosting or running a venue. The backend answers with a new app JWT that carries the
+  /// role; it has to replace the old one before calling anything that needs the role.
+  Future<Account> addRole(Role role) async {
+    final accounts = ref.read(accountRepositoryProvider);
+    ref.read(appTokenStoreProvider).accessToken = await accounts.addRole(role);
+    final account = await accounts.me();
+    if (ref.mounted) state = AsyncData(account);
+    return account;
+  }
+
   /// For the error screen's "Try again".
   Future<void> retry() async {
     ref.invalidateSelf();

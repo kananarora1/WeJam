@@ -82,4 +82,61 @@ void main() {
   test('a ready session with a name goes to profile', () {
     expect(resolve(), Routes.profile);
   });
+
+  test('venue owners land on their venue', () {
+    const owner = Account(
+      id: 'a1',
+      phone: '+911234567890',
+      displayName: 'Bob',
+      roles: {Role.user, Role.venueAdmin},
+    );
+    expect(resolve(session: const AsyncData(owner)), Routes.venue);
+  });
+
+  group('redirectFor', () {
+    test('past the gates, any signed-in screen can be visited', () {
+      for (final location in [
+        Routes.profile,
+        Routes.venue,
+        Routes.newVenue,
+        Routes.venueDetails('v1'),
+      ]) {
+        expect(redirectFor(location: location, target: Routes.profile), isNull);
+        expect(redirectFor(location: location, target: Routes.venue), isNull);
+      }
+    });
+
+    test('a gate always wins over a signed-in screen', () {
+      expect(
+        redirectFor(location: Routes.newVenue, target: Routes.phone),
+        Routes.phone,
+      );
+      expect(
+        redirectFor(location: Routes.profile, target: Routes.name),
+        Routes.name,
+      );
+      expect(
+        redirectFor(location: Routes.venue, target: Routes.sessionError),
+        Routes.sessionError,
+      );
+    });
+
+    test('a gate screen is left once its gate is passed', () {
+      expect(
+        redirectFor(location: Routes.name, target: Routes.venue),
+        Routes.venue,
+      );
+      expect(
+        redirectFor(location: Routes.otp, target: Routes.profile),
+        Routes.profile,
+      );
+    });
+
+    test('a path that only starts like an area is not inside it', () {
+      expect(
+        redirectFor(location: '/venues-old', target: Routes.profile),
+        Routes.profile,
+      );
+    });
+  });
 }

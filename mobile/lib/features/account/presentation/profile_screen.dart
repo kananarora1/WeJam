@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../../core/api/api_error.dart';
+import '../../../core/router/route_resolver.dart';
 import '../../../core/theme/tokens.dart';
+import '../../../core/widgets/eq_bars.dart';
 import '../../auth/presentation/auth_providers.dart';
 import '../domain/account.dart';
 import 'session_controller.dart';
@@ -60,7 +64,9 @@ class ProfileScreen extends ConsumerWidget {
                 ],
               ),
               const Spacer(),
-              OutlinedButton(
+              _RoleActions(account: account),
+              const SizedBox(height: AppSpace.s3),
+              TextButton(
                 onPressed: () =>
                     ref.read(phoneAuthControllerProvider.notifier).signOut(),
                 child: const Text('Sign out'),
@@ -81,6 +87,84 @@ class ProfileScreen extends ConsumerWidget {
   }
 }
 
+/// "Role is changeable later" (design 1.4): turn on running a venue or hosting from here.
+class _RoleActions extends ConsumerStatefulWidget {
+  const _RoleActions({required this.account});
+
+  final Account account;
+
+  @override
+  ConsumerState<_RoleActions> createState() => _RoleActionsState();
+}
+
+class _RoleActionsState extends ConsumerState<_RoleActions> {
+  Role? _adding;
+  String? _error;
+
+  Future<void> _add(Role role) async {
+    setState(() {
+      _adding = role;
+      _error = null;
+    });
+    try {
+      await ref.read(sessionControllerProvider.notifier).addRole(role);
+      if (!mounted) return;
+      if (role == Role.venueAdmin) {
+        context.go(Routes.venue);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Hosting is on. Your host profile comes next.'),
+          ),
+        );
+      }
+    } on ApiFailure catch (e) {
+      if (mounted) setState(() => _error = e.message);
+    } finally {
+      if (mounted) setState(() => _adding = null);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.tokens;
+    final roles = widget.account.roles;
+    Widget action(String label, VoidCallback onPressed, {Role? adds}) =>
+        OutlinedButton(
+          onPressed: _adding == null ? onPressed : null,
+          child: adds != null && _adding == adds
+              ? EqBars(color: tokens.textSecondary)
+              : Text(label),
+        );
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (roles.contains(Role.venueAdmin))
+          action('My venue', () => context.go(Routes.venue))
+        else
+          action(
+            'Run a venue',
+            () => _add(Role.venueAdmin),
+            adds: Role.venueAdmin,
+          ),
+        if (!roles.contains(Role.host)) ...[
+          const SizedBox(height: AppSpace.s2),
+          action('Start hosting', () => _add(Role.host), adds: Role.host),
+        ],
+        if (_error != null) ...[
+          const SizedBox(height: AppSpace.s2),
+          Text(
+            _error!,
+            style: Theme.of(context).textTheme.bodyMedium
+                ?.copyWith(color: tokens.wineText),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
 class _RoleChip extends StatelessWidget {
   const _RoleChip(this.role);
 
@@ -98,15 +182,18 @@ class _RoleChip extends StatelessWidget {
     return Container(
       height: 30,
       padding: const EdgeInsets.symmetric(horizontal: AppSpace.s3),
-      alignment: Alignment.center,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(AppRadii.pill),
         border: Border.all(color: tokens.line),
       ),
-      child: Text(
-        label,
-        style: Theme.of(context).textTheme.labelMedium
-            ?.copyWith(color: tokens.textSecondary),
+      // widthFactor 1: as wide as the label (`alignment` alone would fill the row).
+      child: Center(
+        widthFactor: 1,
+        child: Text(
+          label,
+          style: Theme.of(context).textTheme.labelMedium
+              ?.copyWith(color: tokens.textSecondary),
+        ),
       ),
     );
   }

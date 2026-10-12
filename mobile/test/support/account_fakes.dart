@@ -52,8 +52,16 @@ class FakeAccounts implements AccountRepository {
     return 'jwt-for-$firebaseIdToken';
   }
 
+  /// The roles the backend currently has for this user.
+  final roles = {...account.roles};
+  String? displayName;
+
+  /// Every write, in order — e.g. `['addRole:venueAdmin', 'name:Rhea']`.
+  final calls = <String>[];
+
+  /// The shared [account] until something has been written, so tests can check identity.
   @override
-  Future<Account> me() async => account;
+  Future<Account> me() async => calls.isEmpty ? account : _current();
 
   Object? updateError;
   final namesSent = <String>[];
@@ -61,13 +69,28 @@ class FakeAccounts implements AccountRepository {
   @override
   Future<Account> updateDisplayName(String name) async {
     namesSent.add(name);
+    calls.add('name:$name');
     await Future<void>.delayed(Duration.zero);
     if (updateError != null) throw updateError!;
-    return Account(
-      id: account.id,
-      phone: account.phone,
-      displayName: name,
-      roles: account.roles,
-    );
+    displayName = name;
+    return _current();
   }
+
+  Object? addRoleError;
+
+  @override
+  Future<String> addRole(Role role) async {
+    calls.add('addRole:${role.name}');
+    await Future<void>.delayed(Duration.zero);
+    if (addRoleError != null) throw addRoleError!;
+    roles.add(role);
+    return 'jwt-with-${role.name}';
+  }
+
+  Account _current() => Account(
+    id: account.id,
+    phone: account.phone,
+    displayName: displayName ?? account.displayName,
+    roles: {...roles},
+  );
 }
